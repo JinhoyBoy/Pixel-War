@@ -3,6 +3,15 @@ import json
 from redis_client import redis_client  # Importiere die Verbindung
 
 app = FastAPI()
+COOLDOWN_SECONDS = 60  # Cooldown-Zeit pro Spieler
+
+# Erlaubte Farben (RGB-Hex-Werte von r/place 2022)
+ALLOWED_COLORS = {
+    "#6D001A", "#BE0039", "#FF4500", "#FFA800",
+    "#FFD635", "#FFF8B8", "#00A368", "#00CC78",
+    "#7EED56", "#00756F", "#009EAA", "#2450A4",
+    "#3690EA", "#51E9F4", "#493AC1", "#6A5CFF"
+}
 
 @app.get("/pixel/{x}/{y}")
 def get_pixel(x: int, y: int):
@@ -11,9 +20,29 @@ def get_pixel(x: int, y: int):
         raise HTTPException(status_code=404, detail="Pixel nicht gefunden")
     return json.loads(data)
 
+@app.get("/canvas")
+def get_canvas():
+    """ Gibt das gesamte Canvas als JSON zurück """
+    canvas = redis_client.hgetall("canvas")
+    return {key: json.loads(value) for key, value in canvas.items()}
+
 @app.post("/pixel/")
 def set_pixel(x: int, y: int, color: str, player: str):
+    # Prüfen, ob die Farbe erlaubt ist
+    if color not in ALLOWED_COLORS:
+        raise HTTPException(status_code=400, detail="Ungültige Farbe. Bitte wähle eine erlaubte Farbe.")
+    
+    # Prüfen, ob der Spieler noch im Cooldown ist
+    if redis_client.exists(f"cooldown:{player}"):
+        remaining_time = redis_client.ttl(f"cooldown:{player}")
+        raise HTTPException(status_code=429, detail=f"Bitte warte {remaining_time} Sekunden.")
+    
+    # Pixel setzen
     pixel_data = json.dumps({"color": color, "player": player})
     redis_client.hset("canvas", f"{x}:{y}", pixel_data)
     redis_client.publish("pixel_updates", f"{x}:{y}:{color}:{player}")
+
+    # Cooldown setzen (TTL: COOLDOWN_SECONDS)
+    redis_client.setex(f"cooldown:{player}", COOLDOWN_SECONDS, 1)
+
     return {"message": "Pixel gesetzt", "x": x, "y": y, "color": color, "player": player}
