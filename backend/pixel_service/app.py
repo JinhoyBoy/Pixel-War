@@ -20,12 +20,6 @@ def get_pixel(x: int, y: int):
         raise HTTPException(status_code=404, detail="Pixel nicht gefunden")
     return json.loads(data)
 
-@app.get("/canvas")
-def get_canvas():
-    """ Gibt das gesamte Canvas als JSON zurück """
-    canvas = redis_client.hgetall("canvas")
-    return {key: json.loads(value) for key, value in canvas.items()}
-
 @app.get("/pixel/{x}/{y}/history")
 def get_pixel_history(x: int, y: int, limit: int = 10):
     """
@@ -34,6 +28,12 @@ def get_pixel_history(x: int, y: int, limit: int = 10):
     """
     history = redis_client.lrange(f"history:{x}:{y}", 0, limit - 1)
     return [json.loads(entry) for entry in history]
+
+@app.get("/canvas")
+def get_canvas():
+    """ Gibt das gesamte Canvas als JSON zurück """
+    canvas = redis_client.hgetall("canvas")
+    return {key: json.loads(value) for key, value in canvas.items()}
 
 @app.post("/pixel/")
 def set_pixel(x: int, y: int, color: str, player: str):
