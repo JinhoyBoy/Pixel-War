@@ -26,6 +26,15 @@ def get_canvas():
     canvas = redis_client.hgetall("canvas")
     return {key: json.loads(value) for key, value in canvas.items()}
 
+@app.get("/pixel/{x}/{y}/history")
+def get_pixel_history(x: int, y: int, limit: int = 10):
+    """
+    Gibt die letzten `limit` Änderungen für ein Pixel zurück.
+    Standardmäßig werden die letzten 10 Änderungen ausgegeben.
+    """
+    history = redis_client.lrange(f"history:{x}:{y}", 0, limit - 1)
+    return [json.loads(entry) for entry in history]
+
 @app.post("/pixel/")
 def set_pixel(x: int, y: int, color: str, player: str):
     # Prüfen, ob die Farbe erlaubt ist
@@ -40,6 +49,11 @@ def set_pixel(x: int, y: int, color: str, player: str):
     # Pixel setzen
     pixel_data = json.dumps({"color": color, "player": player})
     redis_client.hset("canvas", f"{x}:{y}", pixel_data)
+
+    # Pixel-Historie speichern (neuste Änderungen zuerst)
+    redis_client.lpush(f"history:{x}:{y}", json.dumps({"color": color, "player": player}))
+
+    # Pub/Sub für Echtzeit-Benachrichtigungen
     redis_client.publish("pixel_updates", f"{x}:{y}:{color}:{player}")
 
     # Cooldown setzen (TTL: COOLDOWN_SECONDS)
