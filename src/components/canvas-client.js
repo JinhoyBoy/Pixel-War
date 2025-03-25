@@ -20,17 +20,38 @@ export function UpdateCanvas(canvas, dict, width, height) {
 
 async function getData() {
   try {
-    const response = await fetch("/api");
+    const response = await fetch("http://localhost:8000/canvas");
     
     if (!response.ok) { 
       throw new Error(`HTTP-Fehler! Status: ${response.status}`);
     }
     
     const data = await response.json();
-    //console.log(data);  // Gibt das JSON aus
+
     return data;  // Kann es einer Variable zuweisen
   } catch (error) {
     console.error("Fehler:", error);
+  }
+}
+
+async function postData(x, y, color, username) {
+  try {
+    const colorCode = encodeURIComponent(color).toUpperCase()
+    const response = await fetch(`http://localhost:8000/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    if (!response.ok) { 
+      throw new Error(`POST fehlgeschlagen! Status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fehler beim Senden des Pixels:", error);
+    return null;
   }
 }
 
@@ -70,6 +91,7 @@ export function CanvasClient({ username }) {
 
     ctx.fillStyle = color
     ctx.fillRect(x * 10, y * 10, 10, 10) // Draw a 10x10 pixel rectangle
+    postData(x, y, color, username)
   }
 
   // Function to update mouse position

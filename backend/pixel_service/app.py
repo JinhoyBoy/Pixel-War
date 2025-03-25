@@ -1,8 +1,19 @@
 from fastapi import FastAPI, HTTPException
 import json
 from redis_client import redis_client  # Importiere die Verbindung
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# CORS aktivieren
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Erlaubte Frontend-URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE
+    allow_headers=["*"],  # Erlaubt alle Header
+)
+
 COOLDOWN_SECONDS = 60  # Cooldown-Zeit pro Spieler
 
 # Erlaubte Farben (RGB-Hex-Werte von r/place 2022)

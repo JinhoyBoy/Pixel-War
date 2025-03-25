@@ -10,7 +10,7 @@ export async function login(username) {
     const session = {
       username,
       createdAt: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 days
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 day
     }
 
     // Encrypt the session
