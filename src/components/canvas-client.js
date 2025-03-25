@@ -2,24 +2,58 @@
 
 import { useState, useRef, useEffect } from "react"
 import { CirclePicker } from "react-color"
-import { logout } from "@/lib/actions"
-import { Button } from "@/components/ui/button"
+
+// function to update the canvas from a json
+export function UpdateCanvas(canvas, dict, width, height) {
+  const ctx = canvas.getContext("2d")
+  for (var key in dict) {
+    var x = Number(key.split(":")[0])
+    var y = Number(key.split(":")[1])
+    if (x > width || y > height) {
+      continue
+    }
+    var value = dict[key].color
+    ctx.fillStyle = value
+    ctx.fillRect(x * 10, y * 10, 10, 10)
+  }
+}
+
+async function getData() {
+  try {
+    const response = await fetch("/api");
+    
+    if (!response.ok) { 
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    //console.log(data);  // Gibt das JSON aus
+    return data;  // Kann es einer Variable zuweisen
+  } catch (error) {
+    console.error("Fehler:", error);
+  }
+}
+
+var json = {}
+json = await getData();
 
 export function CanvasClient({ username }) {
-  const [color, setColor] = useState("#FFFFFF")
+  const width = 40
+  const height = 40
+  const [color, setColor] = useState()
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
+  const [painter, setPainter] = useState({name: "-"})
   const canvasRef = useRef(null)
-
+  
   // Initialize canvas when component mounts
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
       const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.fillStyle = "#FFFFFF"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
     }
+    UpdateCanvas(canvas, json, width, height)
   }, [])
 
   // Function to draw on the canvas
@@ -48,6 +82,8 @@ export function CanvasClient({ username }) {
     const y = Math.floor((e.clientY - rect.top) / 10)
 
     setCoordinates({ x, y })
+    var name = json[x + ":" + y]?.player || "-"
+    setPainter({ name })
   }
 
   return (
@@ -65,8 +101,8 @@ export function CanvasClient({ username }) {
       <div className="bg-white shadow-lg rounded-lg p-2 mb-6">
         <canvas
           ref={canvasRef}
-          width={400} // 40x10px
-          height={400} // 40x10px
+          width={width*10} // 40x10px
+          height={height*10} // 40x10px
           className="border border-gray-200 cursor-pointer"
           onMouseDown={drawPixel}
           onMouseMove={handleMouseMove}
@@ -98,17 +134,12 @@ export function CanvasClient({ username }) {
       {/* Mouse Coordinates Display */}
       <div className="bg-white p-2 rounded shadow-md text-gray-700 mb-4">
         <p>
+          painted by: {painter.name}
+        </p>
+        <p>
           x, y: ({coordinates.x}, {coordinates.y})
         </p>
       </div>
-
-      {/* Logout Button */}
-      <form action={logout}>
-        <Button type="submit" variant="outline">
-          Logout
-        </Button>
-      </form>
     </div>
   )
 }
-

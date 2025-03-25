@@ -2,27 +2,91 @@
 
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { encrypt, decrypt } from "@/lib/session"
 
 export async function login(username) {
-  // Set a cookie with the username
-  const cookieStore = await cookies()
-  cookieStore.set("username", username, {
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24, // 1 day
-    sameSite: "strict",
-  })
+  try {
+    // Create a session object with the username and timestamp
+    const session = {
+      username,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 days
+    }
 
-  // The redirect will happen in the client component after this action completes
+    // Encrypt the session
+    const encryptedSession = await encrypt(session)
+
+    // Set the encrypted session in a cookie
+    const cookieStore = await cookies()
+    cookieStore.set("session", encryptedSession, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 60 * 60 * 24, // 1 day
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production", // Use secure in production
+    })
+  } catch (error) {
+    console.error("Error creating session:", error)
+    throw new Error("Failed to create session")
+  }
 }
 
 export async function logout() {
   const cookieStore = await cookies()
-  cookieStore.delete("username")
+  cookieStore.delete("session")
   redirect("/")
 }
 
 export async function getUsername() {
-  const cookieStore = await cookies()
-  return cookieStore.get("username")?.value
+  try {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get("session")
+
+    if (!sessionCookie?.value) {
+      return null
+    }
+
+    // Decrypt the session
+    const session = await decrypt(sessionCookie.value)
+
+    // Check if session is expired
+    if (!session || session.expiresAt < Date.now()) {
+      // Session expired, delete the cookie
+      cookieStore.delete("session")
+      return null
+    }
+
+    return session.username
+  } catch (error) {
+    console.error("Error getting username:", error)
+    return null
+  }
 }
+
+// Function to get the full session data (for more advanced use cases)
+export async function getSession() {
+  try {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get("session")
+
+    if (!sessionCookie?.value) {
+      return null
+    }
+
+    // Decrypt the session
+    const session = await decrypt(sessionCookie.value)
+
+    // Check if session is expired
+    if (!session || session.expiresAt < Date.now()) {
+      // Session expired, delete the cookie
+      cookieStore.delete("session")
+      return null
+    }
+
+    return session
+  } catch (error) {
+    console.error("Error getting session:", error)
+    return null
+  }
+}
+
