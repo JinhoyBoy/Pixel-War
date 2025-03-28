@@ -12,11 +12,26 @@ services:
       - ./backend/redis.conf:/usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pixelwar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   pixel_service:
     build: ./backend/pixel_service
     container_name: pixel_service
     depends_on:
       - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres/pixelwar
     ports:
       - "8000:8000"
 
@@ -41,3 +56,4 @@ services:
 
 volumes:
   redis_data:
+  postgres_data:
