@@ -9,11 +9,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./backend/redis.conf:/usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   pixel_service:
-    build: ./pixel_service
+    build: ./backend/pixel_service
     container_name: pixel_service
     depends_on:
       - redis
@@ -21,12 +21,23 @@ services:
       - "8000:8000"
 
   event_service:
-    build: ./event_service
+    build: ./backend/event_service
     container_name: event_service
     depends_on:
       - redis
     ports:
       - "8001:8001"
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - pixel_service
+      - event_service
+    environment:
+      - NODE_ENV=production
 
 volumes:
   redis_data:
