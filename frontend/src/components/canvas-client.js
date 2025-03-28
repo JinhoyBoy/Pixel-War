@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { CirclePicker } from "react-color"
+import Image from "next/image"
 
 // function to update the canvas from a json
 export function UpdateCanvas(canvas, dict, width, height) {
@@ -112,8 +113,13 @@ export function CanvasClient({ username }) {
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       {/* Logo & Title at the top center */}
       <div className="mb-8 flex flex-col items-center">
-        <div className="w-10 h-10 bg-primary rounded-full mb-2 flex items-center justify-center text-white font-bold">
-          P
+      <div className="w-10 h-10 mb-2 flex items-center justify-center">
+          <Image 
+            src="/logo.png" 
+            alt="Logo" 
+            width={30} 
+            height={30} 
+          />
         </div>
         <p className="text-xl font-bold text-gray-700">Pixel War</p>
         <p className="text-sm text-gray-500 mt-1">Logged in as: {username}</p>
