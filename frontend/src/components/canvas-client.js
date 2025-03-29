@@ -55,6 +55,7 @@ async function postData(x, y, color, username) {
     return await response.json()
   } catch (error) {
     console.error("Fehler beim Senden des Pixels:", error)
+    setErrorMessage(error.message) // Fehlerzustand setzen
     return null
   }
 }
@@ -67,6 +68,7 @@ export function CanvasClient({ username }) {
   const [painter, setPainter] = useState({ name: "-" })
   const [timer, setTimer] = useState(60) // Timer starts at 60 seconds
   const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
+  const [errorMessage, setErrorMessage] = useState(null);
   const canvasRef = useRef(null)
   const wsRef = useRef(null)
   const reconnectTimeoutRef = useRef(null)
@@ -150,8 +152,8 @@ export function CanvasClient({ username }) {
       const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
 
       // Update locally for immediate feedback
-      ctx.fillStyle = color
-      ctx.fillRect(x * 10, y * 10, 10, 10)
+      //ctx.fillStyle = color
+      //ctx.fillRect(x * 10, y * 10, 10, 10)
 
       // Send to server
       postData(x, y, color, username)
@@ -212,6 +214,19 @@ export function CanvasClient({ username }) {
         </div>
         <div className="ml-auto text-sm text-gray-500 mr-6">Logged in as: {username}</div>
       </header>
+
+      {/* Fehleranzeige */}
+      {errorMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+          <p>{errorMessage}</p>
+          <button
+            className="mt-2 text-sm underline"
+            onClick={() => setErrorMessage(null)} // Fehleranzeige schließen
+          >
+            Schließen
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex justify-center px-4 py-15">
