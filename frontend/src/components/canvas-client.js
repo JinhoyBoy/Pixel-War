@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import { CirclePicker } from "react-color"
+import { io } from "socket.io-client"
 import Image from "next/image"
+
 
 // function to update the canvas from a json
 export function UpdateCanvas(canvas, dict, width, height) {
@@ -32,6 +34,7 @@ async function getData() {
     return data
   } catch (error) {
     console.error("Fehler:", error)
+    return {}
   }
 }
 
@@ -56,7 +59,6 @@ async function postData(x, y, color, username) {
   }
 }
 
-
 export function CanvasClient({ username }) {
   const width = 50
   const height = 50
@@ -64,8 +66,12 @@ export function CanvasClient({ username }) {
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
   const [timer, setTimer] = useState(60) // Timer starts at 60 seconds
+  const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
   const canvasRef = useRef(null)
-  var json = {}
+  const wsRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
+  const pingIntervalRef = useRef(null)
+  const [canvasData, setCanvasData] = useState({})
 
   // Timer logic
   useEffect(() => {
@@ -76,107 +82,120 @@ export function CanvasClient({ username }) {
     return () => clearInterval(interval) // Cleanup interval on unmount
   }, [])
 
-  // Initialize canvas when component mounts
+  // Initialize canvas when component mounts or canvas data changes
   useEffect(() => {
-    const initializeCanvas = async () => {
-      const canvas = canvasRef.current
-      if (canvas) {
-        const ctx = canvas.getContext("2d")
-        ctx.fillStyle = "#FFFFFF"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-      }
-      json = await getData()
-      UpdateCanvas(canvas, json, width, height)
+    const canvas = canvasRef.current
+    if (canvas) {
+      const ctx = canvas.getContext("2d")
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      UpdateCanvas(canvas, canvasData, width, height)
+    }
+  }, [canvasData])
+
+  // Initial data fetch
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const data = await getData()
+      setCanvasData(data || {})
     }
 
-    initializeCanvas()
+    fetchInitialData()
   }, [])
 
+  // WebSocket connection with improved reconnection logic
   useEffect(() => {
-    let ws // WebSocket-Instanz
-    let reconnectTimeout // Timeout für die Wiederverbindung
+    const socket = io("http://localhost:8001")
 
-    const connectWebSocket = () => {
-      ws = new WebSocket("ws://localhost:8001/ws")
+    socket.on("connect", () => {
+      console.log("Socket.IO connected")
+      setConnectionStatus("connected")
+    })
 
-      ws.onopen = () => {
-        console.log("WebSocket-Verbindung hergestellt!");
-        // Sende regelmäßig Pings, um die Verbindung aktiv zu halten
-        const pingInterval = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: "ping" }));
-          }
-        }, 30000); // Alle 30 Sekunden
-      }
+    socket.on("pixel_update", async (data) => {
+      console.log("Received update:", data)
+      const newData = await getData()
+      setCanvasData(newData || {})
+    })
 
-      ws.onmessage = async (event) => {
-        console.log("Pixel-Update erhalten:", event.data)
+    socket.on("disconnect", () => {
+      console.log("Socket.IO disconnected")
+      setConnectionStatus("disconnected")
+    })
 
-        // Canvas neu laden
-        const canvas = canvasRef.current
-        if (canvas) {
-          const ctx = canvas.getContext("2d")
-          json = await getData() // Neue Daten abrufen
-          UpdateCanvas(canvas, json, width, height) // Canvas aktualisieren
-        }
-      }
+    socket.on("connect_error", (error) => {
+      console.error("Socket.IO error:", error)
+      setConnectionStatus("error")
+    })
 
-      ws.onerror = (error) => {
-        console.error("WebSocket-Fehler:", error)
-      }
+    wsRef.current = socket
 
-      ws.onclose = () => {
-        console.log("WebSocket-Verbindung geschlossen. Versuche erneut zu verbinden...")
-        clearInterval(pingInterval) // Stoppe den Ping-Intervall
-        reconnectTimeout = setTimeout(connectWebSocket, 1000) // Nach 1 Sekunden erneut verbinden
-      }
-    }
-
-    // WebSocket-Verbindung herstellen
-    connectWebSocket()
-
-    // Cleanup bei Komponentendemontage
     return () => {
-      if (ws) {
-        ws.onclose = null; // Entferne den Event-Handler, um doppelte Aufrufe zu vermeiden
-        ws.close();
-      }
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-    };
+      socket.disconnect()
+    }
   }, [])
+
 
   // Function to draw on the canvas
   const drawPixel = (e) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    if (timer === 0) {
+      const canvas = canvasRef.current
+      if (!canvas) return
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = Math.floor((e.clientX - rect.left) / 10) // 10px per pixel
-    const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
+      const rect = canvas.getBoundingClientRect()
+      const x = Math.floor((e.clientX - rect.left) / 10) // 10px per pixel
+      const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
 
-    //ctx.fillStyle = color
-    //ctx.fillRect(x * 10, y * 10, 10, 10) // Draw a 10x10 pixel rectangle
-    postData(x, y, color, username)
+      // Update locally for immediate feedback
+      ctx.fillStyle = color
+      ctx.fillRect(x * 10, y * 10, 10, 10)
+
+      // Send to server
+      postData(x, y, color, username)
+
+      // Reset timer
+      setTimer(60)
+    } else {
+      console.log(`Please wait ${timer} seconds before placing another pixel`)
+    }
   }
 
   // Function to update mouse position
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current
     if (!canvas) return
-  
+
     const ctx = canvas.getContext("2d")
     if (!ctx) return
-  
+
     const rect = canvas.getBoundingClientRect()
     const x = Math.floor((e.clientX - rect.left) / 10)
     const y = Math.floor((e.clientY - rect.top) / 10)
-  
+
     setCoordinates({ x, y })
-    var name = json[x + ":" + y]?.player || "-"
+    const name = canvasData[`${x}:${y}`]?.player || "-"
     setPainter({ name })
+  }
+
+  // Connection status indicator
+  const getConnectionStatusColor = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return "bg-green-500"
+      case "connecting":
+        return "bg-yellow-500"
+      case "disconnected":
+        return "bg-red-500"
+      case "error":
+        return "bg-red-500"
+      case "failed":
+        return "bg-gray-500"
+      default:
+        return "bg-gray-300"
+    }
   }
 
   return (
@@ -184,8 +203,12 @@ export function CanvasClient({ username }) {
       {/* Header */}
       <header className="p-6 flex items-center">
         <div className="flex items-center ml-6">
-          <Image src="/logo.png" alt="Logo" width={30} height={30}/>
+          <Image src="/logo.png" alt="Logo" width={30} height={30} />
           <h1 className="text-xl font-semibold ml-3">Pixel War</h1>
+          <div
+            className={`ml-4 w-3 h-3 rounded-full ${getConnectionStatusColor()}`}
+            title={`Connection status: ${connectionStatus}`}
+          ></div>
         </div>
         <div className="ml-auto text-sm text-gray-500 mr-6">Logged in as: {username}</div>
       </header>
@@ -253,6 +276,9 @@ export function CanvasClient({ username }) {
               <p>painter: {painter.name}</p>
               <p>
                 x, y: ({coordinates.x}, {coordinates.y})
+              </p>
+              <p className="mt-2 text-xs">
+                {timer > 0 ? `Wait ${timer}s to place a pixel` : "You can place a pixel now!"}
               </p>
             </div>
           </div>

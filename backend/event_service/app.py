@@ -1,24 +1,32 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import socketio
 import asyncio
-from redis_client import redis_client  # Importieren
+from redis_client import redis_client
+from fastapi import FastAPI
 
+# Erstelle einen Socket.IO-Server mit ASGI
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 app = FastAPI()
+app.mount("/", socketio.ASGIApp(sio))
 
+# Redis Pub/Sub abonnieren
 pubsub = redis_client.pubsub()
 pubsub.subscribe("pixel_updates")
 
-active_connections = []
+async def redis_listener():
+    """Hört auf Redis-Nachrichten und sendet sie an verbundene Clients."""
+    while True:
+        message = await asyncio.get_event_loop().run_in_executor(None, pubsub.get_message)
+        if message and message["type"] == "message":
+            await sio.emit("pixel_update", message["data"])
+        await asyncio.sleep(0.1)
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    active_connections.append(websocket)
-    try:
-        while True:
-            message = await asyncio.to_thread(pubsub.get_message)
-            if message and message["type"] == "message":
-                for connection in active_connections:
-                    await connection.send_text(message["data"])
-            await asyncio.sleep(0.1)
-    except WebSocketDisconnect:
-        active_connections.remove(websocket)
+@sio.event
+async def connect(sid, environ):
+    print(f"Client {sid} verbunden")
+
+@sio.event
+async def disconnect(sid):
+    print(f"Client {sid} getrennt")
+
+# Starte den Redis-Listener im Hintergrund
+asyncio.create_task(redis_listener())
