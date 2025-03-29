@@ -22,11 +22,11 @@ export default async function WelcomePage() {
         <CardContent>
           <h2 className="text-lg font-semibold text-gray-700 text-center">Game Rules</h2>
           <ul>
-            <li className="text-center py-3"> 
-              🎨 You can paint <strong>one pixel</strong> every minute.
-            </li>
             <li className="text-center py-1">
               🌈 Choose from <strong>12 different colors</strong>.
+            </li>
+            <li className="text-center py-3"> 
+              🎨 You can paint <strong>one pixel</strong> every minute.
             </li>
           </ul>
           <p className="text-center text-gray-700 font-medium mt-4">
