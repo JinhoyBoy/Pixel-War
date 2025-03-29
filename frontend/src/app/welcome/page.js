@@ -20,9 +20,9 @@ export default async function WelcomePage() {
           <CardDescription>You have successfully logged in</CardDescription>
         </CardHeader>
         <CardContent>
-          <h2 className="text-lg font-semibold text-gray-700 text-center">Game Rules</h2>
+          <h2 className="text-lg font-semibold text-gray-700 text-center">Game Rules:</h2>
           <ul>
-            <li className="text-center py-1">
+            <li className="text-center py-1 mt-3">
               🌈 Choose from <strong>12 different colors</strong>.
             </li>
             <li className="text-center py-3"> 

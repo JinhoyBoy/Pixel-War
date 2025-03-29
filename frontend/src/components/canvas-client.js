@@ -243,29 +243,12 @@ export function CanvasClient({ username }) {
                 color={color}
                 onChangeComplete={(c) => setColor(c.hex)}
                 colors={[
-                  "#6D001A",
-                  "#BE0039",
-                  "#FF4500",
-
-                  "#FFA800",
-                  "#FFD635",
-                  "#7EED56",
-
-                  "#00CC78",
-                  "#00A368",
-                  "#009EAA",
-
-                  "#2450A4",
-                  "#493AC1",
-                  "#3690EA",
-
-                  "#AA00BB",
-                  "#EE3AEE",
-                  "#AA00FF",
-
-                  "#666666",
-                  "#000000",
-                  "#FFFFFF",
+                  "#6D001A", "#BE0039", "#FF4500", 
+                  "#FFA800", "#FFD635", "#FFF8B8", 
+                  "#00A368", "#00CC78", "#7EED56", 
+                  "#00756F", "#009EAA", "#2450A4",
+                  "#493AC1", "#6A5CFF", "#3690EA", 
+                  "#51E9F4", "#FFFFFF", "#000000",
                 ]}
                 width="12vw"
                 circleSize={35}
