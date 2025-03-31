@@ -5,6 +5,8 @@ import { CirclePicker } from "react-color"
 import { io } from "socket.io-client"
 import Image from "next/image"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
 
 // function to update the canvas from a json
 export function UpdateCanvas(canvas, dict, width, height) {
@@ -24,7 +26,8 @@ export function UpdateCanvas(canvas, dict, width, height) {
 // function to get the data from the server
 async function getData() {
   try {
-    const response = await fetch("http://localhost:8000/canvas")
+    console.log(API_URL)
+    const response = await fetch(`${API_URL}/canvas`)
 
     if (!response.ok) {
       throw new Error(`HTTP-Fehler! Status: ${response.status}`)
@@ -43,7 +46,7 @@ async function getData() {
 async function postData(x, y, color, username) {
   try {
     const colorCode = encodeURIComponent(color).toUpperCase()
-    const response = await fetch(`http://localhost:8000/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, {
+    const response = await fetch(`${API_URL}/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -108,7 +111,7 @@ export function CanvasClient({ username }) {
 
   // WebSocket connection with improved reconnection logic
   useEffect(() => {
-    const socket = io("http://localhost:8001")
+    const socket = io(WS_URL)
 
     socket.on("connect", () => {
       console.log("Socket.IO connected")
