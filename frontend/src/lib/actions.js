@@ -22,8 +22,7 @@ export async function login(username) {
       httpOnly: true,
       path: "/",
       maxAge: 60 * 60 * 24, // 1 day
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production", // Use secure in production
+      sameSite: "lax",
     })
   } catch (error) {
     console.error("Error creating session:", error)
