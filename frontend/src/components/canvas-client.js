@@ -21,6 +21,7 @@ export function UpdateCanvas(canvas, dict, width, height) {
   }
 }
 
+// function to get the data from the server
 async function getData() {
   try {
     const response = await fetch("http://localhost:8000/canvas")
@@ -38,6 +39,7 @@ async function getData() {
   }
 }
 
+// function to post the data to the server
 async function postData(x, y, color, username) {
   try {
     const colorCode = encodeURIComponent(color).toUpperCase()
@@ -63,16 +65,15 @@ async function postData(x, y, color, username) {
 export function CanvasClient({ username }) {
   const width = 50
   const height = 50
+  const cooldown = 10 // Cooldown in seconds
   const [color, setColor] = useState("#000000")
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
-  const [timer, setTimer] = useState(60) // Timer starts at 60 seconds
+  const [timer, setTimer] = useState(cooldown) // Timer starts at 60 seconds
   const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
   const [errorMessage, setErrorMessage] = useState(null);
   const canvasRef = useRef(null)
   const wsRef = useRef(null)
-  const reconnectTimeoutRef = useRef(null)
-  const pingIntervalRef = useRef(null)
   const [canvasData, setCanvasData] = useState({})
 
   // Timer logic
@@ -165,7 +166,7 @@ export function CanvasClient({ username }) {
     }
   }
 
-  // Function to update mouse position
+  // Function to update mouse position and painter name
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -215,13 +216,13 @@ export function CanvasClient({ username }) {
         <div className="ml-auto text-sm text-gray-500 mr-6">Logged in as: {username}</div>
       </header>
 
-      {/* Fehleranzeige */}
+      {/* Error Popup */}
       {errorMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
           <p>{errorMessage}</p>
           <button
             className="mt-2 text-sm underline"
-            onClick={() => setErrorMessage(null)} // Fehleranzeige schließen
+            onClick={() => setErrorMessage(null)} // close Error Popup
           >
             Schließen
           </button>
@@ -235,7 +236,7 @@ export function CanvasClient({ username }) {
           <div className="relative w-8 bg-gray-600 rounded-lg shadow-lg overflow-hidden mr-12">
             <div
               className="absolute bottom-0 w-full bg-gray-400"
-              style={{ height: `${(timer / 60) * 100}%` }} // Dynamic height based on timer
+              style={{ height: `${(timer / cooldown) * 100}%` }} // Dynamic height based on timer
             ></div>
           </div>
 

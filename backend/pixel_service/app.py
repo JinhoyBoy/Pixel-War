@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],  # Erlaubt alle Header
 )
 
-COOLDOWN_SECONDS = 60  # Cooldown-Zeit pro Spieler
+COOLDOWN_SECONDS = 10  # Cooldown-Zeit pro Spieler
 
 # Erlaubte Farben (RGB-Hex-Werte von r/place 2022)
 ALLOWED_COLORS = {
