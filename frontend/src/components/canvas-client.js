@@ -69,7 +69,7 @@ export function CanvasClient({ username }) {
   const [color, setColor] = useState("#000000")
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
-  const [timer, setTimer] = useState(cooldown) // Timer starts at 60 seconds
+  const [timer, setTimer] = useState(cooldown) // Timer starts at cooldown seconds
   const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
   const [errorMessage, setErrorMessage] = useState(null);
   const canvasRef = useRef(null)
@@ -160,7 +160,7 @@ export function CanvasClient({ username }) {
       postData(x, y, color, username)
 
       // Reset timer
-      setTimer(60)
+      setTimer(cooldown)
     } else {
       console.log(`Please wait ${timer} seconds before placing another pixel`)
     }

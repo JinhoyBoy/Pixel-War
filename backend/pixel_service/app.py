@@ -19,13 +19,13 @@ def get_db():
 # CORS aktivieren
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Erlaubte Frontend-URL
+    allow_origins=["*"],  # Erlaubte Frontend-URL
     allow_credentials=True,
     allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE
     allow_headers=["*"],  # Erlaubt alle Header
 )
 
-COOLDOWN_SECONDS = 10  # Cooldown-Zeit pro Spieler
+COOLDOWN_SECONDS = 9  # Cooldown-Zeit pro Spieler
 
 # Erlaubte Farben (RGB-Hex-Werte von r/place 2022)
 ALLOWED_COLORS = {
