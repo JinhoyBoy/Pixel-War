@@ -19,7 +19,9 @@ def get_db():
 # CORS aktivieren
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Erlaubte Frontend-URL
+    allow_origins=[
+        "http://localhost:3000",
+        "http://5.189.158.102:3000" ],  # Erlaubte Frontend-URL
     allow_credentials=True,
     allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE
     allow_headers=["*"],  # Erlaubt alle Header
