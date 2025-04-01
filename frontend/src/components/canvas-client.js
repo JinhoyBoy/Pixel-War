@@ -50,6 +50,7 @@ async function postData(x, y, color, username) {
       headers: {
         Accept: "application/json",
       },
+      credentials: "include",
     })
 
     if (!response.ok) {

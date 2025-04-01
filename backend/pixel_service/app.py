@@ -1,9 +1,13 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request  # Request ergänzt
 from fastapi.middleware.cors import CORSMiddleware
 from redis_client import redis_client 
 from sqlalchemy.orm import Session
 from db import SessionLocal, init_db, Pixel
 import json
+
+# JWT-Import und SECRET_KEY ergänzen
+from jose import JWTError, jwt
+import os
 
 app = FastAPI()
 init_db()
@@ -38,9 +42,46 @@ ALLOWED_COLORS = {
     "#FFFFFF", "#000000"
 }
 
+# Ergänze eine kleine Hilfsfunktion zum Validieren des JWT-Cookies.
+def verify_jwt_cookie(request: Request):
+    # Lies das 'session'-Cookie aus
+    session_cookie = request.cookies.get("session")
+    if not session_cookie:
+        raise HTTPException(status_code=401, detail="Kein Session-Cookie vorhanden.")
+
+    # SECRET_KEY (muss mit dem in deiner Next.js-App übereinstimmen)
+    SECRET_KEY = os.getenv("SESSION_SECRET", "")
+    if not SECRET_KEY:
+        raise HTTPException(status_code=500, detail="SESSION_SECRET nicht konfiguriert.")
+
+    try:
+        # JWT dekodieren und validieren
+        payload = jwt.decode(session_cookie, SECRET_KEY, algorithms=["HS256"])
+        # Optional: payload prüfen, ob exp, iat etc. passen
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Ungültiger oder abgelaufener Token.")
+
 @app.post("/pixel/")
-def set_pixel(x: int, y: int, color: str, player: str, db: Session = Depends(get_db)):
-    # Prüfen, ob die Farbe erlaubt ist
+def set_pixel(
+    x: int,
+    y: int,
+    color: str,
+    player: str,
+    request: Request,                # <--- Request-Objekt hinzugefügt
+    db: Session = Depends(get_db)
+):
+    # 1) Zuerst JWT aus dem Cookie validieren
+    token_payload = verify_jwt_cookie(request)
+
+    # Überprüfen, ob der JWT-Nutzername mit dem "player"-Parameter übereinstimmt
+    if "username" not in token_payload or token_payload["username"] != player:
+        raise HTTPException(
+            status_code=401,
+            detail="Player-Name stimmt nicht mit dem Session-Username überein."
+        )
+
+    # 2) Prüfen, ob die Farbe erlaubt ist
     if color not in ALLOWED_COLORS:
         raise HTTPException(status_code=400, detail="Ungültige Farbe. Bitte wähle eine erlaubte Farbe.")
     

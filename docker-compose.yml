@@ -37,6 +37,8 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgresql://user:password@postgres/pixelwar
+    env_file:
+      - ./backend/pixel_service/.env
     ports:
       - "8000:8000"
 
