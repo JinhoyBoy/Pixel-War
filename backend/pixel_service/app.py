@@ -122,6 +122,15 @@ def get_canvas(db: Session = Depends(get_db)):
     
     return result
 
+# Gibt die ttl für einen Spieler zurück
+@app.get("/cooldown/{player}")
+def get_cooldown(player: str):
+    remaining_time = redis_client.ttl(f"cooldown:{player}")
+    if remaining_time == None:
+        return {"message": 0}
+    else:
+        return {"remaining_time": remaining_time}
+
 """
 @app.get("/pixel/{x}/{y}")
 def get_pixel(x: int, y: int):

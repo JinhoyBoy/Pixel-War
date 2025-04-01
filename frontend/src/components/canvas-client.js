@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { CirclePicker } from "react-color"
 import { io } from "socket.io-client"
-import Image from "next/image"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
@@ -209,7 +208,7 @@ export function CanvasClient({ username }) {
       {/* Header */}
       <header className="p-6 flex items-center">
         <div className="flex items-center ml-6">
-          <Image src="/logo.png" alt="Logo" width={30} height={30} />
+          <img src="/favicon.ico" alt="Logo" width={30} height={30} className="ml-2" />
           <h1 className="text-xl font-semibold ml-3">Pixel War</h1>
           <div
             className={`ml-4 w-3 h-3 rounded-full ${getConnectionStatusColor()}`}
