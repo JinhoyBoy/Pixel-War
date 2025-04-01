@@ -126,10 +126,12 @@ def get_canvas(db: Session = Depends(get_db)):
 @app.get("/cooldown/{player}")
 def get_cooldown(player: str):
     remaining_time = redis_client.ttl(f"cooldown:{player}")
-    if remaining_time == None:
-        return {"message": 0}
+    if remaining_time == -2:
+        return {0}
+    elif remaining_time == -1:
+        return {0}
     else:
-        return {"remaining_time": remaining_time}
+        return {remaining_time}
 
 """
 @app.get("/pixel/{x}/{y}")

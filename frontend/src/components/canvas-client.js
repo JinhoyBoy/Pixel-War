@@ -40,6 +40,26 @@ async function getData() {
   }
 }
 
+// function, to get the cooldown from the server
+async function getCooldown(username) {
+  try {
+    const resp = await fetch(`${API_URL}/cooldown/${username}`, {
+      credentials: "include", // Damit Cookies gesendet werden
+    })
+    if (!resp.ok) {
+      throw new Error(`Cooldown abrufen fehlgeschlagen: ${resp.status}`)
+    }
+    const data = await resp.json()
+    // data könnte z.B. {0} oder {5} enthalten
+    // Wir nehmen den ersten Wert aus dem zurückgegebenen Set
+    const remainingTime = Array.isArray(data) && data.length > 0 ? data[0] : 0
+    return remainingTime
+  } catch (error) {
+    console.error("Fehler beim Abrufen des Cooldowns:", error)
+    return 0 // Fallback
+  }
+}
+
 // function to post the data to the server
 async function postData(x, y, color, username) {
   try {
@@ -71,20 +91,28 @@ export function CanvasClient({ username }) {
   const [color, setColor] = useState("#000000")
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
-  const [timer, setTimer] = useState(cooldown) // Timer starts at cooldown seconds
+  const [timer, setTimer] = useState(0) // Timer starts at cooldown seconds
   const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
   const [errorMessage, setErrorMessage] = useState(null);
   const canvasRef = useRef(null)
   const wsRef = useRef(null)
   const [canvasData, setCanvasData] = useState({})
 
-  // Timer logic
+  // Bei erstem Rendern Cooldown vom Server holen
+  useEffect(() => {
+    const initCooldown = async () => {
+      const serverCooldown = await getCooldown(username)
+      setTimer(serverCooldown)
+    }
+    initCooldown()
+  }, [username])
+
+  // Lokales Intervall, um Timer runterzuzählen
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 0)) // Decrease timer every second
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
-
-    return () => clearInterval(interval) // Cleanup interval on unmount
+    return () => clearInterval(interval)
   }, [])
 
   // Initialize canvas when component mounts or canvas data changes
@@ -119,8 +147,29 @@ export function CanvasClient({ username }) {
 
     socket.on("pixel_update", async (data) => {
       console.log("Received update:", data)
-      const newData = await getData()
-      setCanvasData(newData || {})
+
+      const [xStr, yStr, colorVal, playerName] = data.split(":")
+      const xPos = Number(xStr)
+      const yPos = Number(yStr)
+
+      // Canvas zeichnen
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      const ctx = canvas.getContext("2d")
+      ctx.fillStyle = colorVal
+      ctx.fillRect(xPos * 10, yPos * 10, 10, 10)
+
+      // Lokale State-Daten (canvasData) updaten,
+      // damit z.B. bei MouseOver der korrekte painter sichtbar ist.
+      setCanvasData((prevData) => {
+        const updatedData = { ...prevData }
+        updatedData[`${xPos}:${yPos}`] = {
+          color: colorVal,
+          player: playerName,
+        }
+        return updatedData
+      })
     })
 
     socket.on("disconnect", () => {
@@ -273,7 +322,7 @@ export function CanvasClient({ username }) {
               />
             </div>
             {/* Coordinates Display */}
-            <div className="col-span-3 mt-8 bg-white p-3 rounded-lg shadow text-sm">
+            <div className="col-span-3 mt-8 bg-white p-3 rounded-lg shadow text-sm w-48">
               <p>painter: {painter.name}</p>
               <p>
                 x, y: ({coordinates.x}, {coordinates.y})
