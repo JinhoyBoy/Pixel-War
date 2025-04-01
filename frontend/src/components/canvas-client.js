@@ -208,7 +208,7 @@ export function CanvasClient({ username }) {
       {/* Header */}
       <header className="p-6 flex items-center">
         <div className="flex items-center ml-6">
-          <Image src="/favicon.ico" alt="Logo" width={30} height={30} />
+          <Image src="/logo.png" alt="Logo" width={30} height={30} />
           <h1 className="text-xl font-semibold ml-3">Pixel War</h1>
           <div
             className={`ml-4 w-3 h-3 rounded-full ${getConnectionStatusColor()}`}
