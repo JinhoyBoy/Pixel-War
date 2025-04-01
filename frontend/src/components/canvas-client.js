@@ -189,6 +189,17 @@ export function CanvasClient({ username }) {
     }
   }, [])
 
+  // Function to download the canvas as an image
+  function downloadCanvasAsImage() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+  
+    const url = canvas.toDataURL("image/png")
+    const link = document.createElement("a")
+    link.download = "pixel-canvas.png"
+    link.href = url
+    link.click()
+  }
 
   // Function to draw on the canvas
   const drawPixel = (e) => {
@@ -331,6 +342,13 @@ export function CanvasClient({ username }) {
                 {timer > 0 ? `Wait ${timer}s to place a pixel` : "You can place a pixel now!"}
               </p>
             </div>
+            {/* Download Button */}
+            <button
+              className="mt-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow text-sm hover:bg-gray-600"
+              onClick={downloadCanvasAsImage}
+            >
+              Download Canvas
+            </button>
           </div>
         </div>
       </main>
