@@ -36,7 +36,7 @@ services:
       - redis
       - postgres
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: postgresql://user:password@postgres/pixelwar
     env_file:
       - ./backend/pixel_service/.env
     ports:
