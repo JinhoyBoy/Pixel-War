@@ -3,11 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis_client import redis_client 
 from sqlalchemy.orm import Session
 from db import SessionLocal, init_db, Pixel
-import json
-
-# JWT-Import und SECRET_KEY ergänzen
 from jose import JWTError, jwt
 import os
+import json
+
+COOLDOWN_SECONDS = 9
+ALLOWED_COLORS = {
+    "#6D001A", "#BE0039", "#FF4500", "#FFA800",
+    "#FFD635", "#FFF8B8", "#00A368", "#00CC78",
+    "#7EED56", "#00756F", "#009EAA", "#2450A4",
+    "#3690EA", "#51E9F4", "#493AC1", "#6A5CFF", 
+    "#FFFFFF", "#000000"
+}
+
 
 app = FastAPI()
 init_db()
@@ -30,17 +38,6 @@ app.add_middleware(
     allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE
     allow_headers=["*"],  # Erlaubt alle Header
 )
-
-COOLDOWN_SECONDS = 9  # Cooldown-Zeit pro Spieler
-
-# Erlaubte Farben (RGB-Hex-Werte von r/place 2022)
-ALLOWED_COLORS = {
-    "#6D001A", "#BE0039", "#FF4500", "#FFA800",
-    "#FFD635", "#FFF8B8", "#00A368", "#00CC78",
-    "#7EED56", "#00756F", "#009EAA", "#2450A4",
-    "#3690EA", "#51E9F4", "#493AC1", "#6A5CFF", 
-    "#FFFFFF", "#000000"
-}
 
 # Ergänze eine kleine Hilfsfunktion zum Validieren des JWT-Cookies.
 def verify_jwt_cookie(request: Request):
