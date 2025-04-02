@@ -34,12 +34,13 @@ export function LoginForm() {
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Username <span className="text-xs text-muted-foreground">(max 16 characters)</span> </Label>
               <Input
                 id="username"
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                maxLength={16}
                 required
               />
             </div>
