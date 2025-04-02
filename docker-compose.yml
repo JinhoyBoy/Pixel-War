@@ -1,25 +1,4 @@
 services:
-  traefik:
-    image: traefik:v2.9
-    command:
-      - "--providers.docker=true"
-      - "--api.insecure=true"
-      - "--entrypoints.backend.address=:80"
-      - "--entrypoints.backend.forwardingTimeouts.responseHeaderTimeout=10s"
-      - "--entrypoints.backend.forwardingTimeouts.readTimeout=10s"
-      - "--entrypoints.backend.forwardingTimeouts.writeTimeout=10s"
-    ports:
-      - "80:80"
-      - "8080:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - frontend
-      - backend
-    deploy:
-      replicas: 1
-      labels:
-        - "traefik.enable=true"
   redis:
     image: redis:latest
     restart: always
@@ -58,13 +37,13 @@ services:
       - ./backend/pixel_service/.env
     ports:
       - "8000:8000"
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-      networks:
-        - backend
-        - frontend
+    #deploy:
+    #  replicas: 3
+    #  restart_policy:
+    #    condition: on-failure
+    networks:
+      - backend
+      - frontend
 
   event_service:
     image: event_service_image
@@ -72,29 +51,13 @@ services:
       - redis
     ports:
       - "8001:8001"
-    deploy:
-      replicas: 3
-      labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.event_service.entrypoints=web"
-      - "traefik.http.routers.event_service.rule=Path(`/ws`)"
-      - "traefik.http.services.event_service.loadbalancer.server.port=80"
-      # Sticky Sessions falls gewünscht:
-      #- "traefik.http.services.event_service.loadbalancer.sticky=true"
-      #- "traefik.http.services.event_service.loadbalancer.sticky.cookie.name=session"
-      restart_policy:
-        condition: on-failure
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-        interval: 30s
-        retries: 3s
-        timeout: 10s
-        start_period: 40s
-      networks:
-        - backend
-        - frontend
-      #expose:
-      #  - "80"
+    #deploy:
+    #  replicas: 3
+    #  restart_policy:
+    #    condition: on-failure
+    networks:
+      - backend
+      - frontend
 
   frontend:
     image: frontend_image
@@ -108,3 +71,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  backend:
+  frontend:
