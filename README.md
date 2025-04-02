@@ -1,13 +1,16 @@
-Zum lokalen Erstellen des Projektes führe folgenden Befehl im Projektverzeichnis aus:
+### Zum lokalen Erstellen des Projektes führe folgenden Befehl im Projektverzeichnis aus:
 
-    docker-compose up -d --build
+#### Für Mac/ Linux
+    ./deploy.sh
 
+#### Für Windows
+    ./deploy.ps1
 
-Anschließend ist das Frontend erreichbar unter:
-
+### Anschließend ist das Frontend erreichbar unter:
     http://localhost:3000
 
-
-FAST-API-Docs ist erreichbar unter:
-
+### FAST-API-Docs ist erreichbar unter:
     http://localhost:8000/docs
+
+### Zum Stoppen des Projekte führe folgendes Befehl im Projektverzeichnis aus:
+    docker stack rm pixel_stack
