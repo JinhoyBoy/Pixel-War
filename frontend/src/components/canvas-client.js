@@ -22,21 +22,29 @@ export function UpdateCanvas(canvas, dict, width, height) {
   }
 }
 
-// Funktion um die Canvas-Daten vom Server abzurufen
-async function getData() {
-  try {
-    const response = await fetch(`${API_URL}/canvas`)
+// Funktion um die Canvas-Daten vom Server abzurufen (mit Retry-Logik)
+async function getDataWithRetry(retries = 5, delay = 1000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(`${API_URL}/canvas`);
 
-    if (!response.ok) {
-      throw new Error(`HTTP-Fehler! Status: ${response.status}`)
+      if (!response.ok) {
+        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data; // Erfolgreich abgerufen, Rückgabe der Daten
+    } catch (error) {
+      console.error(`Fehler beim Abrufen der Canvas-Daten (Versuch ${attempt}):`, error);
+
+      if (attempt < retries) {
+        console.log(`Warte ${delay}ms und versuche es erneut...`);
+        await new Promise((resolve) => setTimeout(resolve, delay)); // Wartezeit vor erneutem Versuch
+      } else {
+        console.error("Maximale Anzahl an Versuchen erreicht. Abbruch.");
+        return {}; // Rückgabe eines leeren Objekts als Fallback
+      }
     }
-
-    const data = await response.json()
-
-    return data
-  } catch (error) {
-    console.error("Fehler:", error)
-    return {}
   }
 }
 
@@ -126,10 +134,10 @@ export function CanvasClient({ username }) {
     }
   }, [canvasData])
 
-  // Initial data fetch
+  // Initial data fetch mit Retry-Logik
   useEffect(() => {
     const fetchInitialData = async () => {
-      const data = await getData()
+      const data = await getDataWithRetry()
       setCanvasData(data || {})
     }
 
