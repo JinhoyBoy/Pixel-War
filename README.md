@@ -13,4 +13,4 @@
     http://localhost:8000/docs
 
 ### Zum Stoppen des Projekte führe folgendes Befehl im Projektverzeichnis aus:
-    docker stack rm pixel_stack
+    docker stack rm pixelstack
