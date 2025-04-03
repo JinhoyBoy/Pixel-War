@@ -1,17 +1,23 @@
-# Baue Docker-Images und deploye in Docker Swarm
-echo "Baue Docker-Images..."
-docker build -t pixel_service_image ./backend/pixel_service
-docker build -t event_service_image ./backend/event_service
-docker build -t frontend_image ./frontend
+SERVICES=("pixel_service" "event_service")
 
-# Falls Swarm nicht läuft, initialisieren
-if ! docker info | grep -q "Swarm: active"; then
-    echo "Initialisiere Docker Swarm..."
-    docker swarm init
+echo "Baue MicroServices-Images..."
+for SERVICE in "${SERVICES[@]}"; do
+    IMAGE_NAME="${SERVICE}_image:latest"
+    echo "Baue $IMAGE_NAME..."
+    sudo docker build -t $IMAGE_NAME ./backend/$SERVICE
+done
+
+echo "Baue Frontend-Image..."
+sudo docker build -t frontend_image:latest ./frontend
+
+if ! sudo docker info | grep -q "Swarm: active"; then
+    echo "Starte Docker Swarm..."
+    sudo docker swarm init
+else
+    echo "Docker Swarm läuft bereits!"
 fi
 
-# Stack in Swarm deployen
-echo "Deploye Stack in Swarm..."
-docker stack deploy -c docker-compose.yml pixel_stack
+echo "Deploye Stack mit Docker Swarm..."
+sudo docker stack deploy -c docker-compose.yml pixelstack
 
 echo "Deployment abgeschlossen!"

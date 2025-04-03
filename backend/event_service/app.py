@@ -3,8 +3,11 @@ import asyncio
 from redis_client import redis_client
 from fastapi import FastAPI
 
-# Erstelle einen Socket.IO-Server mit ASGI
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+# Erstelle einen Socket.IO-Server
+sio = socketio.AsyncServer(
+    async_mode="asgi",
+    cors_allowed_origins="*", # Erlaube nur das Frontend
+)
 app = FastAPI()
 app.mount("/", socketio.ASGIApp(sio))
 
@@ -28,5 +31,12 @@ async def connect(sid, environ):
 async def disconnect(sid):
     print(f"Client {sid} getrennt")
 
+@sio.event
+async def pixel_update(sid, data):
+    print(f"Pixel-Update von {sid}: {data}")
+
+@sio.on("*")
+async def catch_all_event(event, sid, data):
+    print(f"Unbekanntes Event: {event}, Daten: {data}")
 # Starte den Redis-Listener im Hintergrund
 asyncio.create_task(redis_listener())

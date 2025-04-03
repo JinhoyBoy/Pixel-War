@@ -1,4 +1,21 @@
+version: "3.8"
+
 services:
+  haproxy:
+    image: haproxy:latest
+    build: 
+      context: ./
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg 
+    deploy:
+      replicas: 1
+    networks:
+      - ws-network
+    depends_on:
+      - event_service
   redis:
     image: redis:latest
     restart: always
@@ -20,47 +37,52 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d pixelwar"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - backend
 
   pixel_service:
-    image: pixel_service_image
+    build:
+      context: ./backend/pixel_service
+      dockerfile: Dockerfile
+    image: pixel_service_image:latest
     depends_on:
       - redis
       - postgres
+      - event_service
     env_file:
       - ./backend/pixel_service/.env
     ports:
       - "8000:8000"
-    #deploy:
-    #  replicas: 3
-    #  restart_policy:
-    #    condition: on-failure
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
     networks:
       - backend
       - frontend
 
   event_service:
-    image: event_service_image
+    build:
+      context: ./backend/event_service
+      dockerfile: Dockerfile
+    image: event_service_image:latest
     depends_on:
       - redis
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
     ports:
-      - "8001:8001"
-    #deploy:
-    #  replicas: 3
-    #  restart_policy:
-    #    condition: on-failure
+      - "8001:8001" # Direktzugriff auf den Event-Service
     networks:
       - backend
       - frontend
+      - ws-network
 
   frontend:
-    image: frontend_image
+    build:
+      context: ./frontend
+    image: frontend_image:latest
     ports:
       - "3000:3000"
     depends_on:
@@ -68,6 +90,8 @@ services:
       - event_service
     environment:
       - NODE_ENV=production
+    networks:
+      - frontend
 
 volumes:
   postgres_data:
@@ -75,3 +99,5 @@ volumes:
 networks:
   backend:
   frontend:
+  ws-network:
+    driver: overlay

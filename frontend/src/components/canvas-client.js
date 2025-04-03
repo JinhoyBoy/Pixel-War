@@ -138,7 +138,11 @@ export function CanvasClient({ username }) {
 
   // WebSocket connection with improved reconnection logic
   useEffect(() => {
-    const socket = io(WS_URL)
+    const socket = io(WS_URL, {
+      transports: ["websocket"],
+      rejectUnauthorized: false,
+      
+  })
 
     socket.on("connect", () => {
       console.log("Socket.IO connected")
@@ -179,6 +183,9 @@ export function CanvasClient({ username }) {
 
     socket.on("connect_error", (error) => {
       console.error("Socket.IO error:", error)
+      console.log(error.code)   // 3
+      console.log(error.message) // "Bad request"
+      console.log(error.context)
       setConnectionStatus("error")
     })
 
