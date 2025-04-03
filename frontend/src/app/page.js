@@ -5,7 +5,7 @@ import { getUsername} from "@/lib/actions"
 export default async function Home() {
   const username = await getUsername()
   
-    // If no username is found, redirect to login page
+    // Wenn eine Session vorhanden redirect -> login page
     if (username) {
       redirect("/canvas")
     }

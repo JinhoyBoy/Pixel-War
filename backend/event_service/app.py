@@ -38,5 +38,6 @@ async def pixel_update(sid, data):
 @sio.on("*")
 async def catch_all_event(event, sid, data):
     print(f"Unbekanntes Event: {event}, Daten: {data}")
+    
 # Starte den Redis-Listener im Hintergrund
 asyncio.create_task(redis_listener())

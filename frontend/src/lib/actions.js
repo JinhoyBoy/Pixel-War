@@ -4,19 +4,20 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { encrypt, decrypt } from "@/lib/session"
 
+// Funktion für den Login
 export async function login(username) {
   try {
-    // Create a session object with the username and timestamp
+    // Neue Session
     const session = {
       username,
       createdAt: Date.now(),
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 day
     }
 
-    // Encrypt the session
+    // Encrypt die session
     const encryptedSession = await encrypt(session)
 
-    // Set the encrypted session in a cookie
+    // Setze den Cookie
     const cookieStore = await cookies()
     cookieStore.set("session", encryptedSession, {
       httpOnly: true,
@@ -30,12 +31,15 @@ export async function login(username) {
   }
 }
 
+// Funktion für den Logout
+// Löscht den Cookie
 export async function logout() {
   const cookieStore = await cookies()
   cookieStore.delete("session")
   redirect("/")
 }
 
+// Funktion um den Benutzernamen aus dem Cookie zu bekommen
 export async function getUsername() {
   try {
     const cookieStore = await cookies()
@@ -45,12 +49,11 @@ export async function getUsername() {
       return null
     }
 
-    // Decrypt the session
+    // Decrypt die session
     const session = await decrypt(sessionCookie.value)
 
-    // Check if session is expired
+    // Wenn die Session abgelaufen ist, löschen den Cookie
     if (!session || session.expiresAt < Date.now()) {
-      // Session expired, delete the cookie
       cookieStore.delete("session")
       return null
     }
@@ -62,7 +65,7 @@ export async function getUsername() {
   }
 }
 
-// Function to get the full session data (for more advanced use cases)
+// Funktion um die Session zu bekommen
 export async function getSession() {
   try {
     const cookieStore = await cookies()
@@ -72,12 +75,11 @@ export async function getSession() {
       return null
     }
 
-    // Decrypt the session
+    // Decrypt
     const session = await decrypt(sessionCookie.value)
 
-    // Check if session is expired
+    // Wenn die Session abgelaufen ist, löschen Cookie
     if (!session || session.expiresAt < Date.now()) {
-      // Session expired, delete the cookie
       cookieStore.delete("session")
       return null
     }

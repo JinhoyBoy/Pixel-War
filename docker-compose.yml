@@ -43,7 +43,6 @@ services:
   pixel_service:
     build:
       context: ./backend/pixel_service
-      dockerfile: Dockerfile
     image: pixel_service_image:latest
     depends_on:
       - redis
@@ -64,7 +63,6 @@ services:
   event_service:
     build:
       context: ./backend/event_service
-      dockerfile: Dockerfile
     image: event_service_image:latest
     depends_on:
       - redis
@@ -73,7 +71,7 @@ services:
       restart_policy:
         condition: on-failure
     ports:
-      - "8001:8001" # Direktzugriff auf den Event-Service
+      - "8001:8001"
     networks:
       - backend
       - frontend

@@ -7,7 +7,7 @@ import { io } from "socket.io-client"
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
 
-// function to update the canvas from a json
+// Funktion um die Canvas-Daten zu aktualisieren
 export function UpdateCanvas(canvas, dict, width, height) {
   const ctx = canvas.getContext("2d")
   for (var key in dict) {
@@ -22,7 +22,7 @@ export function UpdateCanvas(canvas, dict, width, height) {
   }
 }
 
-// function to get the data from the server
+// Funktion um die Canvas-Daten vom Server abzurufen
 async function getData() {
   try {
     const response = await fetch(`${API_URL}/canvas`)
@@ -40,7 +40,7 @@ async function getData() {
   }
 }
 
-// function, to get the cooldown from the server
+// Funktion um den Cooldown vom Server abzurufen
 async function getCooldown(username) {
   try {
     const resp = await fetch(`${API_URL}/cooldown/${username}`, {
@@ -91,8 +91,8 @@ export function CanvasClient({ username }) {
   const [color, setColor] = useState("#000000")
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
-  const [timer, setTimer] = useState(0) // Timer starts at cooldown seconds
-  const [connectionStatus, setConnectionStatus] = useState("connecting") // Add connection status
+  const [timer, setTimer] = useState(0) // Timer startet bei cooldown seconds
+  const [connectionStatus, setConnectionStatus] = useState("connecting")
   const [errorMessage, setErrorMessage] = useState(null);
   const canvasRef = useRef(null)
   const wsRef = useRef(null)
@@ -115,7 +115,7 @@ export function CanvasClient({ username }) {
     return () => clearInterval(interval)
   }, [])
 
-  // Initialize canvas when component mounts or canvas data changes
+  // Initialize canvas 
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
@@ -136,7 +136,7 @@ export function CanvasClient({ username }) {
     fetchInitialData()
   }, [])
 
-  // WebSocket connection with improved reconnection logic
+  // WebSocket-Client initialisieren und mit dem Server verbinden
   useEffect(() => {
     const socket = io(WS_URL, {
       transports: ["websocket"],
@@ -196,7 +196,7 @@ export function CanvasClient({ username }) {
     }
   }, [])
 
-  // Function to download the canvas as an image
+  // Funktion zum Herunterladen des Canvas als Bild
   function downloadCanvasAsImage() {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -208,7 +208,7 @@ export function CanvasClient({ username }) {
     link.click()
   }
 
-  // Function to draw on the canvas
+  // Funktion zum Zeichnen eines Pixels
   const drawPixel = (e) => {
     if (timer === 0) {
       const canvas = canvasRef.current
@@ -221,7 +221,6 @@ export function CanvasClient({ username }) {
       const x = Math.floor((e.clientX - rect.left) / 10) // 10px per pixel
       const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
 
-      // Update locally for immediate feedback
       //ctx.fillStyle = color
       //ctx.fillRect(x * 10, y * 10, 10, 10)
 
