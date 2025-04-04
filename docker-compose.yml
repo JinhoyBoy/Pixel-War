@@ -55,7 +55,9 @@ services:
     deploy:
       replicas: 3
       restart_policy:
-        condition: on-failure
+        condition: any
+        delay: 5s
+        max_attempts: 3
     networks:
       - backend
       - frontend
@@ -69,7 +71,9 @@ services:
     deploy:
       replicas: 3
       restart_policy:
-        condition: on-failure
+        condition: any
+        delay: 5s
+        max_attempts: 3
     ports:
       - "8001:8001"
     networks:
@@ -86,6 +90,13 @@ services:
     depends_on:
       - pixel_service
       - event_service
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     environment:
       - NODE_ENV=production
     networks:
