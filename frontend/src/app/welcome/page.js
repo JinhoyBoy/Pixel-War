@@ -1,3 +1,7 @@
+//
+// Welcome Page für Regeln und Logout -> nutzt actions.js
+//
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUsername, logout } from "@/lib/actions"
@@ -7,7 +11,7 @@ import Link from "next/link"
 export default async function WelcomePage() {
   const username = await getUsername()
 
-  // If no username is found, redirect to login page
+  // Wenn keine gültige Session -> Login-Seite
   if (!username) {
     redirect("/")
   }

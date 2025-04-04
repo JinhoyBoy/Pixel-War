@@ -16,7 +16,6 @@ ALLOWED_COLORS = {
     "#FFFFFF", "#000000"
 }
 
-
 app = FastAPI()
 init_db()
 
@@ -39,22 +38,19 @@ app.add_middleware(
     allow_headers=["*"],  # Erlaubt alle Header
 )
 
-# Ergänze eine kleine Hilfsfunktion zum Validieren des JWT-Cookies.
+# Hilfsfunktion zum Validieren des JWT-Cookies.
 def verify_jwt_cookie(request: Request):
-    # Lies das 'session'-Cookie aus
     session_cookie = request.cookies.get("session")
     if not session_cookie:
         raise HTTPException(status_code=401, detail="Kein Session-Cookie vorhanden.")
 
-    # SECRET_KEY (muss mit dem in deiner Next.js-App übereinstimmen)
+    # SECRET_KEY (muss mit der Next.js-App übereinstimmen)
     SECRET_KEY = os.getenv("SESSION_SECRET", "")
     if not SECRET_KEY:
         raise HTTPException(status_code=500, detail="SESSION_SECRET nicht konfiguriert.")
 
     try:
-        # JWT dekodieren und validieren
-        payload = jwt.decode(session_cookie, SECRET_KEY, algorithms=["HS256"])
-        # Optional: payload prüfen, ob exp, iat etc. passen
+        payload = jwt.decode(session_cookie, SECRET_KEY, algorithms=["HS256"]) # JWT dekodieren und validieren
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Ungültiger oder abgelaufener Token.")
@@ -65,24 +61,23 @@ def set_pixel(
     y: int,
     color: str,
     player: str,
-    request: Request,                # <--- Request-Objekt hinzugefügt
+    request: Request,
     db: Session = Depends(get_db)
 ):
-    # 1) Zuerst JWT aus dem Cookie validieren
     token_payload = verify_jwt_cookie(request)
 
-    # Überprüfen, ob der JWT-Nutzername mit dem "player"-Parameter übereinstimmt
+    # 1. Prüfen, ob JWT-Nutzername =="player"-Parameter
     if "username" not in token_payload or token_payload["username"] != player:
         raise HTTPException(
             status_code=401,
             detail="Player-Name stimmt nicht mit dem Session-Username überein."
         )
 
-    # 2) Prüfen, ob die Farbe erlaubt ist
+    # 2. Prüfen, ob die Farbe erlaubt ist
     if color not in ALLOWED_COLORS:
         raise HTTPException(status_code=400, detail="Ungültige Farbe. Bitte wähle eine erlaubte Farbe.")
     
-    # Prüfen, ob der Spieler noch im Cooldown ist
+    # 3. Prüfen, ob Player noch Cooldown hat
     if redis_client.exists(f"cooldown:{player}"):
         remaining_time = redis_client.ttl(f"cooldown:{player}")
         raise HTTPException(status_code=429, detail=f"Bitte warte {remaining_time} Sekunden.")
@@ -123,9 +118,9 @@ def get_canvas(db: Session = Depends(get_db)):
 @app.get("/cooldown/{player}")
 def get_cooldown(player: str):
     remaining_time = redis_client.ttl(f"cooldown:{player}")
-    if remaining_time == -2:
+    if remaining_time == -2: # Key existiert nicht
         return {0}
-    elif remaining_time == -1:
+    elif remaining_time == -1: # Key existiert, aber kein TTL gesetzt
         return {0}
     else:
         return {remaining_time}

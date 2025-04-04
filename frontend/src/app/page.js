@@ -1,3 +1,7 @@
+//
+// Seite für Login (Startseite), nutzt login-form.js und actions.js
+//
+
 import { LoginForm } from "@/components/login-form"
 import { redirect } from "next/navigation"
 import { getUsername} from "@/lib/actions"

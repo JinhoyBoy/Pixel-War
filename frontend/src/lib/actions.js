@@ -1,3 +1,7 @@
+//
+// Next.js-Action für die Authentifizierung -> wird von der Login-Seite importiert
+//
+
 "use server"
 
 import { cookies } from "next/headers"
@@ -14,13 +18,11 @@ export async function login(username) {
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 day
     }
 
-    // Encrypt die session
-    const encryptedSession = await encrypt(session)
+    const encryptedSession = await encrypt(session) // verschlüsseln (session.js)
 
-    // Setze den Cookie
     const cookieStore = await cookies()
     cookieStore.set("session", encryptedSession, {
-      httpOnly: true,
+      httpOnly: true, // Nur vom Server lesbar
       path: "/",
       maxAge: 60 * 60 * 24, // 1 day
       sameSite: "lax",
@@ -31,8 +33,7 @@ export async function login(username) {
   }
 }
 
-// Funktion für den Logout
-// Löscht den Cookie
+// Funktion für den Logout -> Löscht den Cookie
 export async function logout() {
   const cookieStore = await cookies()
   cookieStore.delete("session")
@@ -49,10 +50,9 @@ export async function getUsername() {
       return null
     }
 
-    // Decrypt die session
-    const session = await decrypt(sessionCookie.value)
+    const session = await decrypt(sessionCookie.value) // entschlüsseln (session.js)
 
-    // Wenn die Session abgelaufen ist, löschen den Cookie
+    // Bei Ablauf der Session Cookie löschen
     if (!session || session.expiresAt < Date.now()) {
       cookieStore.delete("session")
       return null

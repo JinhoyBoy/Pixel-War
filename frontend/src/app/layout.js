@@ -1,3 +1,7 @@
+//
+// Layout für das Frontend (titel, favicon, fonts, etc.), nutzt den globalen CSS
+//
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 

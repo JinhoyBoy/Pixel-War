@@ -3,10 +3,10 @@ import asyncio
 from redis_client import redis_client
 from fastapi import FastAPI
 
-# Erstelle einen Socket.IO-Server
+# Socket.IO-Server
 sio = socketio.AsyncServer(
     async_mode="asgi",
-    cors_allowed_origins="*", # Erlaube nur das Frontend
+    cors_allowed_origins="*",
 )
 app = FastAPI()
 app.mount("/", socketio.ASGIApp(sio))
@@ -15,12 +15,12 @@ app.mount("/", socketio.ASGIApp(sio))
 pubsub = redis_client.pubsub()
 pubsub.subscribe("pixel_updates")
 
+# Hört auf Redis-Nachrichten und dann -> Clients
 async def redis_listener():
-    """Hört auf Redis-Nachrichten und sendet sie an verbundene Clients."""
     while True:
         message = await asyncio.get_event_loop().run_in_executor(None, pubsub.get_message)
         if message and message["type"] == "message":
-            await sio.emit("pixel_update", message["data"])
+            await sio.emit("pixel_update", message["data"]) # An alle clients senden (pixel_update)
         await asyncio.sleep(0.1)
 
 @sio.event

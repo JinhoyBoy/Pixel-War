@@ -1,3 +1,7 @@
+//
+// Session Management mit JWT -> wird von der actions.js importiert
+//
+
 "use server"
 
 import { SignJWT, jwtVerify } from "jose"

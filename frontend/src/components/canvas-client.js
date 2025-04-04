@@ -1,3 +1,7 @@
+//
+// Client-Component für die Canvas-Interaktion, wird von CanvasPage aufgerufen
+//
+
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -7,18 +11,19 @@ import { io } from "socket.io-client"
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
 
-// Funktion um die Canvas-Daten zu aktualisieren
+// Funktion um die Canvas-Daten zu aktualisieren (for-loop für alle werte)
 export function UpdateCanvas(canvas, dict, width, height) {
   const ctx = canvas.getContext("2d")
   for (var key in dict) {
+    // key ist z.B. "0:0" -> splitten und die ersten beiden Werte nehmen
     var x = Number(key.split(":")[0])
     var y = Number(key.split(":")[1])
     if (x > width || y > height) {
       continue
     }
-    var value = dict[key].color
+    var value = dict[key].color // jede key (x:y) hat ein color als value
     ctx.fillStyle = value
-    ctx.fillRect(x * 10, y * 10, 10, 10)
+    ctx.fillRect(x * 10, y * 10, 10, 10) // 10px pro Pixel
   }
 }
 
@@ -26,52 +31,56 @@ export function UpdateCanvas(canvas, dict, width, height) {
 async function getDataWithRetry(retries = 5, delay = 1000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(`${API_URL}/canvas`);
+      const response = await fetch(`${API_URL}/canvas`)
 
       if (!response.ok) {
-        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+        throw new Error(`HTTP-Fehler! Status: ${response.status}`)
       }
 
-      const data = await response.json();
-      return data; // Erfolgreich abgerufen, Rückgabe der Daten
+      const data = await response.json()
+      return data
+      
     } catch (error) {
-      console.error(`Fehler beim Abrufen der Canvas-Daten (Versuch ${attempt}):`, error);
+      console.error(`Fehler beim Abrufen der Canvas-Daten (Versuch ${attempt}):`, error)
 
-      if (attempt < retries) {
-        console.log(`Warte ${delay}ms und versuche es erneut...`);
-        await new Promise((resolve) => setTimeout(resolve, delay)); // Wartezeit vor erneutem Versuch
+      // Retry-Logik
+      if (attempt < retries) { 
+        console.log(`Warte ${delay}ms und versuche es erneut...`)
+        await new Promise((resolve) => setTimeout(resolve, delay)) // Warten vor erneutem Versuch
       } else {
-        console.error("Maximale Anzahl an Versuchen erreicht. Abbruch.");
-        return {}; // Rückgabe eines leeren Objekts als Fallback
+        console.error("Maximale Anzahl an Versuchen erreicht. Abbruch.")
+        return {} // Rückgabe eines leeren Objekts als Fallback
       }
     }
   }
 }
 
-// Funktion um den Cooldown vom Server abzurufen
+// Funktion um den User-Cooldown vom Server abzurufen
 async function getCooldown(username) {
   try {
     const resp = await fetch(`${API_URL}/cooldown/${username}`, {
       credentials: "include", // Damit Cookies gesendet werden
     })
+
     if (!resp.ok) {
       throw new Error(`Cooldown abrufen fehlgeschlagen: ${resp.status}`)
     }
-    const data = await resp.json()
-    // data könnte z.B. {0} oder {5} enthalten
-    // Wir nehmen den ersten Wert aus dem zurückgegebenen Set
-    const remainingTime = Array.isArray(data) && data.length > 0 ? data[0] : 0
+
+    const data = await resp.json() // data könnte z.B. {0} oder {5} enthalten
+    
+    const remainingTime = Array.isArray(data) && data.length > 0 ? data[0] : 0 // Fallback auf 0, wenn kein Wert
     return remainingTime
-  } catch (error) {
+
+  } catch (error) { 
     console.error("Fehler beim Abrufen des Cooldowns:", error)
-    return 0 // Fallback
+    return 0 
   }
 }
 
-// function to post the data to the server
+// Funktion um ein Pixel zu posten
 async function postData(x, y, color, username) {
   try {
-    const colorCode = encodeURIComponent(color).toUpperCase()
+    const colorCode = encodeURIComponent(color).toUpperCase() // z.B. %23FF0000 für rot
     const response = await fetch(`${API_URL}/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, {
       method: "POST",
       headers: {
@@ -87,7 +96,7 @@ async function postData(x, y, color, username) {
     return await response.json()
   } catch (error) {
     console.error("Fehler beim Senden des Pixels:", error)
-    setErrorMessage(error.message) // Fehlerzustand setzen
+    setErrorMessage(error.message) // Fehlerzustand setzen für die Anzeige
     return null
   }
 }
@@ -95,13 +104,13 @@ async function postData(x, y, color, username) {
 export function CanvasClient({ username }) {
   const width = 50
   const height = 50
-  const cooldown = 10 // Cooldown in seconds
-  const [color, setColor] = useState("#000000")
+  const cooldown = 10 // in sekunden
+  const [color, setColor] = useState("#000000") // Standardfarbe schwarz
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
-  const [timer, setTimer] = useState(0) // Timer startet bei cooldown seconds
+  const [timer, setTimer] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState("connecting")
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null); 
   const canvasRef = useRef(null)
   const wsRef = useRef(null)
   const [canvasData, setCanvasData] = useState({})
@@ -160,14 +169,14 @@ export function CanvasClient({ username }) {
     socket.on("pixel_update", async (data) => {
       console.log("Received update:", data)
 
-      const [xStr, yStr, colorVal, playerName] = data.split(":")
+      const [xStr, yStr, colorVal, playerName] = data.split(":") // z.B. "0:0:#FFFFFF:Max"
       const xPos = Number(xStr)
       const yPos = Number(yStr)
 
-      // Canvas zeichnen
       const canvas = canvasRef.current
       if (!canvas) return
-
+      
+      // Canvas aktualisieren
       const ctx = canvas.getContext("2d")
       ctx.fillStyle = colorVal
       ctx.fillRect(xPos * 10, yPos * 10, 10, 10)
@@ -210,7 +219,7 @@ export function CanvasClient({ username }) {
     if (!canvas) return
   
     const url = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
+    const link = document.createElement("a") // Link-Element erstellen für Download
     link.download = "pixel-canvas.png"
     link.href = url
     link.click()
@@ -229,13 +238,12 @@ export function CanvasClient({ username }) {
       const x = Math.floor((e.clientX - rect.left) / 10) // 10px per pixel
       const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
 
+      // Wenn man lokal direkt updaten möchte
       //ctx.fillStyle = color
       //ctx.fillRect(x * 10, y * 10, 10, 10)
 
-      // Send to server
       postData(x, y, color, username)
 
-      // Reset timer
       setTimer(cooldown)
     } else {
       console.log(`Please wait ${timer} seconds before placing another pixel`)
@@ -259,7 +267,7 @@ export function CanvasClient({ username }) {
     setPainter({ name })
   }
 
-  // Connection status indicator
+  // Connection status Indikator
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
       case "connected":
@@ -298,7 +306,7 @@ export function CanvasClient({ username }) {
           <p>{errorMessage}</p>
           <button
             className="mt-2 text-sm underline"
-            onClick={() => setErrorMessage(null)} // close Error Popup
+            onClick={() => setErrorMessage(null)} // Error Popup schliessen bei Klick
           >
             Schließen
           </button>
@@ -312,7 +320,7 @@ export function CanvasClient({ username }) {
           <div className="relative w-8 bg-gray-600 rounded-lg shadow-lg overflow-hidden mr-12">
             <div
               className="absolute bottom-0 w-full bg-gray-400"
-              style={{ height: `${(timer / cooldown) * 100}%` }} // Dynamic height based on timer
+              style={{ height: `${(timer / cooldown) * 100}%` }} // Dynamische höhe der Timer-Leiste
             ></div>
           </div>
 
@@ -328,7 +336,7 @@ export function CanvasClient({ username }) {
             />
           </div>
 
-          {/* Color Palette */}
+          {/* Color Palette (von React-Color) */}
           <div className="flex flex-col align-center ml-12">
             <div className="col-span-3">
               <CirclePicker

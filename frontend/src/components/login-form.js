@@ -1,3 +1,7 @@
+//
+// Client-Component für die Login-Seite, wird von der Login-Seite importiert
+//
+
 "use client"
 
 import React from "react"
@@ -15,11 +19,13 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  // Funktion für den Login-Button
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!username.trim()) return
+    if (!username.trim()) return // Leere Eingabe verhindern
 
-    setIsLoading(true)
+    // Auf login-Action warten
+    setIsLoading(true) 
     await login(username)
     router.push("/welcome")
   }

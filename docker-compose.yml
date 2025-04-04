@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # Load Balancer (HAProxy) für Event Service (WebSocket)
   haproxy:
     image: haproxy:latest
     build: 
@@ -16,6 +17,8 @@ services:
       - ws-network
     depends_on:
       - event_service
+  
+  # Redis für die Speicherung von Pixel-Daten (Schnellzugriff)
   redis:
     image: redis:latest
     restart: always
@@ -27,6 +30,7 @@ services:
     networks:
       - backend
 
+  # PostgreSQL für die Speicherung von Pixel-Daten (Persistenz)
   postgres:
     image: postgres:latest
     environment:
@@ -40,6 +44,7 @@ services:
     networks:
       - backend
 
+  # Pixel Service für die Verarbeitung von Pixel-Daten (mit Replicas)
   pixel_service:
     build:
       context: ./backend/pixel_service
@@ -62,6 +67,7 @@ services:
       - backend
       - frontend
 
+  # Event Service für WebSocket-Verbindungen für das Updaten der Canvas (mit Replicas)
   event_service:
     build:
       context: ./backend/event_service
@@ -81,6 +87,7 @@ services:
       - frontend
       - ws-network
 
+  # NEXT.js - Frontend für die Benutzeroberfläche (mit Replicas)
   frontend:
     build:
       context: ./frontend
