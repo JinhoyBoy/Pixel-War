@@ -98,7 +98,7 @@ services:
       - pixel_service
       - event_service
     deploy:
-      replicas: 2
+      replicas: 3
       restart_policy:
         condition: any
         delay: 5s
