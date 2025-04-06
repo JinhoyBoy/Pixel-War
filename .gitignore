@@ -34,7 +34,7 @@ yarn-error.log*
 .env
 
 # redis
-**redis.conf
+/backend/redis.conf
 
 # vercel
 .vercel
