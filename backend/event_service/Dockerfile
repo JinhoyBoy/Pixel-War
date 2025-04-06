@@ -1,4 +1,4 @@
-# Basis-Image: Python 3.9
+# Basis-Image
 FROM python:3.9-slim
 
 # Arbeitsverzeichnis im Container erstellen und setzen

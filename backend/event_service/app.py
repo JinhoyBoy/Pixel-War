@@ -3,17 +3,17 @@ import asyncio
 from redis_client import redis_client
 from fastapi import FastAPI
 
-# Socket.IO-Server
+# Socket.IO-Server konfigurieren
 sio = socketio.AsyncServer(
     async_mode="asgi",
     cors_allowed_origins="*",
 )
 app = FastAPI()
-app.mount("/", socketio.ASGIApp(sio))
+app.mount("/", socketio.ASGIApp(sio)) # Socket.IO in FastAPI-Server einbinden
 
-# Redis Pub/Sub abonnieren
+
 pubsub = redis_client.pubsub()
-pubsub.subscribe("pixel_updates")
+pubsub.subscribe("pixel_updates") # Abonnieren des "pixel_updates"-Channels
 
 # Hört auf Redis-Nachrichten und dann -> Clients
 async def redis_listener():
