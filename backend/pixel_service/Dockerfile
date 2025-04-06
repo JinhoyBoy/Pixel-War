@@ -1,4 +1,4 @@
-# Basis-Image: Python 3.8
+# Basis-Image
 FROM python:3.8-slim
 
 # Arbeitsverzeichnis im Container erstellen und setzen

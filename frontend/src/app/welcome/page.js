@@ -16,6 +16,7 @@ export default async function WelcomePage() {
     redirect("/")
   }
 
+  // UI-Elemente für die Willkommensseite
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <Card className="w-full max-w-md">

@@ -85,7 +85,7 @@ services:
       - frontend
       - ws-network
 
-  # NEXT.js - Frontend für die Benutzeroberfläche (mit Replicas)
+  # NEXT.js als Frontend für die Benutzeroberfläche (mit Replicas)
   frontend:
     build:
       context: ./frontend

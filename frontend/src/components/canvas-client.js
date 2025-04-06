@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react"
 import { CirclePicker } from "react-color"
 import { io } from "socket.io-client"
 
+// Umgebungsvariablen aus der .env-Datei laden
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL;
 
@@ -21,17 +22,17 @@ export function UpdateCanvas(canvas, dict, width, height) {
     if (x > width || y > height) {
       continue
     }
-    var value = dict[key].color // jede key (x:y) hat ein color als value
+    var value = dict[key].color // jeder key (x:y) hat ein color als value
     ctx.fillStyle = value
-    ctx.fillRect(x * 10, y * 10, 10, 10) // 10px pro Pixel
+    ctx.fillRect(x * 10, y * 10, 10, 10) // 10px pro Canvas-Pixel
   }
 }
 
-// Funktion um die Canvas-Daten vom Server abzurufen (mit Retry-Logik)
+// Funktion um die Canvas-Daten vom Backend abzurufen (mit Retry-Logik)
 async function getDataWithRetry(retries = 5, delay = 1000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(`${API_URL}/canvas`)
+      const response = await fetch(`${API_URL}/canvas`) // Aufruf der REST-API
 
       if (!response.ok) {
         throw new Error(`HTTP-Fehler! Status: ${response.status}`)
@@ -58,17 +59,17 @@ async function getDataWithRetry(retries = 5, delay = 1000) {
 // Funktion um den User-Cooldown vom Server abzurufen
 async function getCooldown(username) {
   try {
-    const resp = await fetch(`${API_URL}/cooldown/${username}`, {
-      credentials: "include", // Damit Cookies gesendet werden
+    const resp = await fetch(`${API_URL}/cooldown/${username}`, { // Aufruf der REST-API
+      credentials: "include", // Session-Cookie wird mitgesendet
     })
 
     if (!resp.ok) {
       throw new Error(`Cooldown abrufen fehlgeschlagen: ${resp.status}`)
     }
 
-    const data = await resp.json() // data könnte z.B. {0} oder {5} enthalten
+    const data = await resp.json() // Beispiel-JSON-String für data: {5} => 5 Sekunden Cooldown
     
-    const remainingTime = Array.isArray(data) && data.length > 0 ? data[0] : 0 // Fallback auf 0, wenn kein Wert
+    const remainingTime = Array.isArray(data) && data.length > 0 ? data[0] : 0 // Wenn kein Cooldown gesetzt ist => Cooldown = 0
     return remainingTime
 
   } catch (error) { 
@@ -81,12 +82,12 @@ async function getCooldown(username) {
 async function postData(x, y, color, username) {
   try {
     const colorCode = encodeURIComponent(color).toUpperCase() // z.B. %23FF0000 für rot
-    const response = await fetch(`${API_URL}/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, {
+    const response = await fetch(`${API_URL}/pixel/?x=${x}&y=${y}&color=${colorCode}&player=${username}`, { // Aufruf der REST-API
       method: "POST",
       headers: {
         Accept: "application/json",
       },
-      credentials: "include",
+      credentials: "include", // Session-Cookie wird mitgesendet
     })
 
     if (!response.ok) {
@@ -96,15 +97,16 @@ async function postData(x, y, color, username) {
     return await response.json()
   } catch (error) {
     console.error("Fehler beim Senden des Pixels:", error)
-    setErrorMessage(error.message) // Fehlerzustand setzen für die Anzeige
+    setErrorMessage(error.message) // Fehlerzustand setzen für die Connection-Anzeige (roter Punkt neben "Pixel War"-Logo)
     return null
   }
 }
 
+// Client-Component für die Canvas-Interaktion
 export function CanvasClient({ username }) {
   const width = 50
   const height = 50
-  const cooldown = 10 // in sekunden
+  const cooldown = 10 // Cooldown 1 Sekunde länger als im Backend um Konflikte zu vermeiden
   const [color, setColor] = useState("#000000") // Standardfarbe schwarz
   const [coordinates, setCoordinates] = useState({ x: "-", y: "-" })
   const [painter, setPainter] = useState({ name: "-" })
@@ -124,7 +126,7 @@ export function CanvasClient({ username }) {
     initCooldown()
   }, [username])
 
-  // Lokales Intervall, um Timer runterzuzählen
+  // Cooldown-Timer runterzählen
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0))
@@ -132,7 +134,7 @@ export function CanvasClient({ username }) {
     return () => clearInterval(interval)
   }, [])
 
-  // Initialize canvas 
+  // Canvas initialisieren und mit den Daten vom Server befüllen
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
@@ -160,7 +162,6 @@ export function CanvasClient({ username }) {
       rejectUnauthorized: false,
       
   })
-
     socket.on("connect", () => {
       console.log("Socket.IO connected")
       setConnectionStatus("connected")
@@ -181,8 +182,7 @@ export function CanvasClient({ username }) {
       ctx.fillStyle = colorVal
       ctx.fillRect(xPos * 10, yPos * 10, 10, 10)
 
-      // Lokale State-Daten (canvasData) updaten,
-      // damit z.B. bei MouseOver der korrekte painter sichtbar ist.
+      // Lokale State-Daten (canvasData) updaten, damit z.B. bei MouseOver der korrekte painter sichtbar ist.
       setCanvasData((prevData) => {
         const updatedData = { ...prevData }
         updatedData[`${xPos}:${yPos}`] = {
@@ -200,8 +200,8 @@ export function CanvasClient({ username }) {
 
     socket.on("connect_error", (error) => {
       console.error("Socket.IO error:", error)
-      console.log(error.code)   // 3
-      console.log(error.message) // "Bad request"
+      console.log(error.code)   // z.B. "3"
+      console.log(error.message) // z.B. "Bad request"
       console.log(error.context)
       setConnectionStatus("error")
     })
@@ -215,12 +215,12 @@ export function CanvasClient({ username }) {
 
   // Funktion zum Herunterladen des Canvas als Bild
   function downloadCanvasAsImage() {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current 
+    if (!canvas) return // Wenn kein Canvas vorhanden ist, wird nichts heruntergeladen
   
-    const url = canvas.toDataURL("image/png")
+    const url = canvas.toDataURL("image/png") // Canvas in ein PNG-Bild umwandeln
     const link = document.createElement("a") // Link-Element erstellen für Download
-    link.download = "pixel-canvas.png"
+    link.download = "pixel-canvas.png" // // Dateiname für den Download
     link.href = url
     link.click()
   }
@@ -231,35 +231,35 @@ export function CanvasClient({ username }) {
       const canvas = canvasRef.current
       if (!canvas) return
 
-      const ctx = canvas.getContext("2d")
+      const ctx = canvas.getContext("2d") // Canvas-Rendering-Kontext
       if (!ctx) return
 
       const rect = canvas.getBoundingClientRect()
-      const x = Math.floor((e.clientX - rect.left) / 10) // 10px per pixel
-      const y = Math.floor((e.clientY - rect.top) / 10) // 10px per pixel
+      const x = Math.floor((e.clientX - rect.left) / 10) // 10 x 10px pro Canvas-Pixel
+      const y = Math.floor((e.clientY - rect.top) / 10) 
 
       // Wenn man lokal direkt updaten möchte
       //ctx.fillStyle = color
       //ctx.fillRect(x * 10, y * 10, 10, 10)
 
-      postData(x, y, color, username)
+      postData(x, y, color, username) // POST-Request an Backend senden
 
-      setTimer(cooldown)
+      setTimer(cooldown) // Cooldown auf definierte Sekundenanzahl zurücksetzen
     } else {
       console.log(`Please wait ${timer} seconds before placing another pixel`)
     }
   }
 
-  // Function to update mouse position and painter name
+  // Funktion um die Mausposition zu verfolgen und den aktuellen Spieler anzuzeigen
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext("2d")
+    const ctx = canvas.getContext("2d") // Canvas-Rendering-Kontext
     if (!ctx) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = Math.floor((e.clientX - rect.left) / 10)
+    const x = Math.floor((e.clientX - rect.left) / 10) // 10 x 10px pro Canvas-Pixel
     const y = Math.floor((e.clientY - rect.top) / 10)
 
     setCoordinates({ x, y })
@@ -267,24 +267,25 @@ export function CanvasClient({ username }) {
     setPainter({ name })
   }
 
-  // Connection status Indikator
+  // Farbe des Connection-Status-Punktes neben "Pixel War"-Logo zur Anzeige der WebSocket-Verbindung
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
-      case "connected":
+      case "connected": // Verbunden => grün
         return "bg-green-500"
-      case "connecting":
+      case "connecting": // Verbinde => gelb
         return "bg-yellow-500"
-      case "disconnected":
+      case "disconnected": // Getrennt => rot
         return "bg-red-500"
-      case "error":
+      case "error": // Fehler => rot
         return "bg-red-500"
-      case "failed":
+      case "failed": // Fehlgeschlagen => grau
         return "bg-gray-500"
-      default:
+      default: // Standardfarbe => grau
         return "bg-gray-300"
     }
   }
 
+  // UI-Elemente für die Canvas-Seite
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}

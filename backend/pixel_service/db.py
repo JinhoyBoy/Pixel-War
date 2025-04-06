@@ -11,6 +11,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Datenbank-Komponenten initialisieren
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -25,6 +26,6 @@ class Pixel(Base):
     player = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-# Erstellt die Datenbank-Tabellen
+# Erstellen der Datenbank
 def init_db():
     Base.metadata.create_all(bind=engine)

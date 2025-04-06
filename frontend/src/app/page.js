@@ -1,5 +1,5 @@
 //
-// Seite für Login (Startseite), nutzt login-form.js und actions.js
+// Login-/Startseite, nutzt login-form.js und actions.js
 //
 
 import { LoginForm } from "@/components/login-form"
@@ -9,11 +9,12 @@ import { getUsername} from "@/lib/actions"
 export default async function Home() {
   const username = await getUsername()
   
-    // Wenn eine Session vorhanden redirect -> login page
+    // Wenn eine Session vorhanden redirect -> canvas-Page
     if (username) {
       redirect("/canvas")
     }
 
+  // UI-Elemente für die Login-Seite
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-md">

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request  # Request ergänzt
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from redis_client import redis_client 
 from sqlalchemy.orm import Session
@@ -7,8 +7,8 @@ from jose import JWTError, jwt
 import os
 import json
 
-COOLDOWN_SECONDS = 9
-ALLOWED_COLORS = {
+COOLDOWN_SECONDS = 9 # Cooldown-Zeit eine Sekunde weniger als im Frontend um Konflikte zu vermeiden
+ALLOWED_COLORS = { # 18 Originalfarben aus r/place
     "#6D001A", "#BE0039", "#FF4500", "#FFA800",
     "#FFD635", "#FFF8B8", "#00A368", "#00CC78",
     "#7EED56", "#00756F", "#009EAA", "#2450A4",
@@ -27,34 +27,34 @@ def get_db():
     finally:
         db.close()
 
-# CORS aktivieren
+# CORS-Middlware zwischen Frontend und Backend 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=[ # Frontend-URLs die aufs Backend zugreifen dürfen 
         "http://localhost:3000",
-        "http://5.189.158.102:3000" ],  # Erlaubte Frontend-URL
+        "http://5.189.158.102:3000" ],
     allow_credentials=True,
     allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE
     allow_headers=["*"],  # Erlaubt alle Header
 )
 
-# Hilfsfunktion zum Validieren des JWT-Cookies.
+# Validieren des JWT-Cookies
 def verify_jwt_cookie(request: Request):
     session_cookie = request.cookies.get("session")
     if not session_cookie:
         raise HTTPException(status_code=401, detail="Kein Session-Cookie vorhanden.")
 
-    # SECRET_KEY (muss mit der Next.js-App übereinstimmen)
+    # Validierung des JWT-Cookies
     SECRET_KEY = os.getenv("SESSION_SECRET", "")
     if not SECRET_KEY:
-        raise HTTPException(status_code=500, detail="SESSION_SECRET nicht konfiguriert.")
-
+        raise HTTPException(status_code=500, detail="SESSION_SECRET nicht konfiguriert.") # Fehlermeldung bei nicht konfiguriertem SECRET_KEY
     try:
         payload = jwt.decode(session_cookie, SECRET_KEY, algorithms=["HS256"]) # JWT dekodieren und validieren
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Ungültiger oder abgelaufener Token.")
 
+# Setzen eines Pixel auf dem Canvas
 @app.post("/pixel/")
 def set_pixel(
     x: int,
@@ -66,7 +66,7 @@ def set_pixel(
 ):
     token_payload = verify_jwt_cookie(request)
 
-    # 1. Prüfen, ob JWT-Nutzername =="player"-Parameter
+    # 1. Prüfen, ob JWT-Nutzername =="player"-Parameter im Frontend (Anti-Cheat-Mechanismus)
     if "username" not in token_payload or token_payload["username"] != player:
         raise HTTPException(
             status_code=401,
@@ -82,10 +82,10 @@ def set_pixel(
         remaining_time = redis_client.ttl(f"cooldown:{player}")
         raise HTTPException(status_code=429, detail=f"Bitte warte {remaining_time} Sekunden.")
     
-    # Pixel in Redis speichern (Echtzeit-Update)
+    # Pixel in Redis speichern
     pixel_data = json.dumps({"color": color, "player": player})
     redis_client.hset("canvas", f"{x}:{y}", pixel_data)
-    redis_client.publish("pixel_updates", f"{x}:{y}:{color}:{player}") # Pub/Sub für Echtzeit-Benachrichtigungen
+    redis_client.publish("pixel_updates", f"{x}:{y}:{color}:{player}") # Benachrichtigung über Pixeländerung
     redis_client.lpush(f"history:{x}:{y}", json.dumps({"color": color, "player": player})) # Pixel-Historie speichern (neuste Änderungen zuerst)
     
     # Pixel in PostgreSQL speichern (persistente Speicherung)
@@ -93,7 +93,7 @@ def set_pixel(
     db.add(db_pixel)
     db.commit()
 
-    # Cooldown setzen (TTL: COOLDOWN_SECONDS)
+    # Cooldown per Redis-Eintrag mit TTL setzen
     redis_client.setex(f"cooldown:{player}", COOLDOWN_SECONDS, 1)
 
     return {"message": "Pixel gesetzt", "x": x, "y": y, "color": color, "player": player}
@@ -114,13 +114,13 @@ def get_canvas(db: Session = Depends(get_db)):
     
     return result
 
-# Gibt die ttl für einen Spieler zurück
+# Gibt den Cooldown für einen Spieler zurück
 @app.get("/cooldown/{player}")
 def get_cooldown(player: str):
     remaining_time = redis_client.ttl(f"cooldown:{player}")
-    if remaining_time == -2: # Key existiert nicht
+    if remaining_time == -2: # Wenn der TTL-Eintrag bereits gelöscht wurde existiert kein Cooldown mehr
         return {0}
-    elif remaining_time == -1: # Key existiert, aber kein TTL gesetzt
+    elif remaining_time == -1: # Wenn der TTL-Eintrag existiert aber kein Cooldown mehr vorhanden ist 
         return {0}
     else:
         return {remaining_time}

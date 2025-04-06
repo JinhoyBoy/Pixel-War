@@ -30,6 +30,7 @@ export function LoginForm() {
     router.push("/welcome")
   }
 
+  // UI-Elemente für das Login-Formular
   return (
     <Card>
       <CardHeader>

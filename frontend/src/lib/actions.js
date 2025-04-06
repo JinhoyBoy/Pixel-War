@@ -18,13 +18,13 @@ export async function login(username) {
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 1 day
     }
 
-    const encryptedSession = await encrypt(session) // verschlüsseln (session.js)
+    const encryptedSession = await encrypt(session) // Verschlüsseln der Session mit session.js
 
     const cookieStore = await cookies()
     cookieStore.set("session", encryptedSession, {
       httpOnly: true, // Nur vom Server lesbar
       path: "/",
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: 60 * 60 * 24, // Session für 1 Tag gültig
       sameSite: "lax",
     })
   } catch (error) {
@@ -33,10 +33,10 @@ export async function login(username) {
   }
 }
 
-// Funktion für den Logout -> Löscht den Cookie
+// Funktion für den Logout
 export async function logout() {
   const cookieStore = await cookies()
-  cookieStore.delete("session")
+  cookieStore.delete("session") // Cookie wird bei Logout gelöscht
   redirect("/")
 }
 
@@ -50,9 +50,9 @@ export async function getUsername() {
       return null
     }
 
-    const session = await decrypt(sessionCookie.value) // entschlüsseln (session.js)
+    const session = await decrypt(sessionCookie.value) // Entschlüsseln der Session
 
-    // Bei Ablauf der Session Cookie löschen
+    // Bei Ablauf der Session den Cookie löschen
     if (!session || session.expiresAt < Date.now()) {
       cookieStore.delete("session")
       return null
@@ -75,11 +75,9 @@ export async function getSession() {
       return null
     }
 
-    // Decrypt
-    const session = await decrypt(sessionCookie.value)
+    const session = await decrypt(sessionCookie.value) // Entschlüsseln der Session
 
-    // Wenn die Session abgelaufen ist, löschen Cookie
-    if (!session || session.expiresAt < Date.now()) {
+    if (!session || session.expiresAt < Date.now()) { // Bei Ablauf der Session den Cookie löschen
       cookieStore.delete("session")
       return null
     }

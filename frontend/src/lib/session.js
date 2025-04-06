@@ -6,23 +6,22 @@
 
 import { SignJWT, jwtVerify } from "jose"
 
-// Secret Key für die JWT-Token
-const secretKey = process.env.SESSION_SECRET
+const secretKey = process.env.SESSION_SECRET // Session_SECRET aus der .env-Datei laden
 if (!secretKey) {
   throw new Error("SESSION_SECRET is not set")
 }
 const encodedKey = new TextEncoder().encode(secretKey)
 
-// Encrypt session data
+// Funktion zur Verschlüsselung der Session
 export async function encrypt(payload) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d") // Token läuft nach 7 Tagen ab
+    .setExpirationTime("1d") // Token läuft nach 1 Tag ab
     .sign(encodedKey)
 }
 
-// Decrypt session data
+// Funktion zur Entschlüsselung der Session
 export async function decrypt(session) {
   if (!session) return null
 
