@@ -1,39 +1,47 @@
-# Pixel-War
+```
+ ____    ______  __   __   ____    __                __      __  ______  ____       
+/\  _`\ /\__  _\/\ \ /\ \ /\  _`\ /\ \              /\ \  __/\ \/\  _  \/\  _`\     
+\ \ \L\ \/_/\ \/\ `\`\/'/'\ \ \L\_\ \ \             \ \ \/\ \ \ \ \ \L\ \ \ \L\ \   
+ \ \ ,__/  \ \ \ `\/ > <   \ \  _\L\ \ \  __  _______\ \ \ \ \ \ \ \  __ \ \ ,  /   
+  \ \ \/    \_\ \__ \/'/\`\ \ \ \L\ \ \ \L\ \/\______\\ \ \_/ \_\ \ \ \/\ \ \ \\ \  
+   \ \_\    /\_____\/\_\\ \_\\ \____/\ \____/\/______/ \ `\___x___/\ \_\ \_\ \_\ \_\
+    \/_/    \/_____/\/_/ \/_/ \/___/  \/___/            '\/__//__/  \/_/\/_/\/_/\/ /
+```
 
-## Zum lokalen starten des Projektes
+# Zum lokalen starten des Projektes
 
-#### Für Mac/ Linux
+### Für Mac/ Linux
 
 	./deploy.sh
 
 
-#### Für Windows
+### Für Windows
 
 	./deploy.ps1
 
   
-#### Anschließend ist das Frontend erreichbar unter:
+### Anschließend ist das Frontend erreichbar unter:
 
 - http://localhost:3000
 
   
-#### FAST-API-Docs ist erreichbar unter:
+### FAST-API-Docs ist erreichbar unter:
 
 - http://localhost:8000/docs
 
   
 
-## Zum Stoppen des Projektes:
+# Zum Stoppen des Projektes:
 
 	docker stack rm pixelstack
 
-## Projektstruktur
+# Projektstruktur
 	backend/
-	├── event_service/        # Service zur Verwaltung der Pixel
+	├── event_service/        # Service für Echtzeit-Updates
 	│   ├── Dockerfile           
 	│   ├── app.py               # Hauptdatei
 	│   └── redis_client.py      # Redis-Verbindung
-	├── pixel_service/        # Service für Echtzeit-Updates
+	├── pixel_service/        # Service zur Verwaltung der Pixel
 	│   ├── Dockerfile           
 	│   ├── app.py               # Hauptdatei
 	│   ├── db.py                # Postgres-Verbindung
@@ -52,7 +60,7 @@
 	docker-compose.yml        # Docker-Compose Konfiguration
 	haproxy.cfg               # Konfiguration für Load-Balancing
 
-## Technologien
+# Technologien
 
 - **Frontend**: NEXT.js
 - **Backend**: FastAPI, SocketIO
