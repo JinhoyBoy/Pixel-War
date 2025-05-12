@@ -8,7 +8,7 @@
     \/_/    \/_____/\/_/ \/_/ \/___/  \/___/            '\/__//__/  \/_/\/_/\/_/\/ /
 ```
 
-# Zum lokalen starten des Projektes
+## Projekt bauen
 
 ### Für Mac/ Linux
 
@@ -31,11 +31,20 @@
 
   
 
-# Zum Stoppen des Projektes:
+### Zum Stoppen des Projektes:
 
 	docker stack rm pixelstack
 
-# Projektstruktur
+## Technologien
+
+- **Frontend**: NEXT.js
+- **Backend**: FastAPI, SocketIO
+- **Session-Management**: Jose, cookies (next/headers)
+- **Datenbanken**: Redis, PostgreSQL
+- **Containerisierung**: Docker, Docker Swarm
+- **Load Balancer**: HAProxy
+
+## Projektstruktur
 	backend/
 	├── event_service/        # Service für Echtzeit-Updates
 	│   ├── Dockerfile           
@@ -59,12 +68,3 @@
 	        └── session.js       # JWT-Verwaltung
 	docker-compose.yml        # Docker-Compose Konfiguration
 	haproxy.cfg               # Konfiguration für Load-Balancing
-
-# Technologien
-
-- **Frontend**: NEXT.js
-- **Backend**: FastAPI, SocketIO
-- **Session-Management**: Jose, cookies (next/headers)
-- **Datenbanken**: Redis, PostgreSQL
-- **Containerisierung**: Docker, Docker Swarm
-- **Load Balancer**: HAProxy
