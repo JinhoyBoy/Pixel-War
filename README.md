@@ -29,11 +29,13 @@
 
 - http://localhost:8000/docs
 
-  
 
 ### Zum Stoppen des Projektes:
 
 	docker stack rm pixelstack
+
+## UI-Elemente
+![architecture](./screenshots/UI.png)
 
 ## Technologien
 
@@ -43,6 +45,9 @@
 - **Datenbanken**: Redis, PostgreSQL
 - **Containerisierung**: Docker, Docker Swarm
 - **Load Balancer**: HAProxy
+
+## Architektur
+![architecture](./screenshots/Architecture.png)
 
 ## Projektstruktur
 	backend/
