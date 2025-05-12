@@ -34,8 +34,10 @@
 
 	docker stack rm pixelstack
 
-## UI-Elemente
-![architecture](./screenshots/UI.png)
+## Screenshots
+
+**Snapshot am 12.05.2025**
+![Snapshot](./screenshots/Screenshot.png)
 
 ## Technologien
 
