@@ -20,7 +20,7 @@
 	./deploy.ps1
 
   
-### Anschließend ist das Frontend erreichbar unter:
+### Frontend ist erreichbar unter:
 
 - http://localhost:3000
 
